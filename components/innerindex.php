@@ -126,8 +126,8 @@ class bSuite_Innerindex
 
 		// find <h*> tags in the content
 		$content = preg_replace(
-			'/<h'. $htag .'([^>]*)>(.*?)<h'. $htag .'/is',
-			'<h'. $htag .'\1><div>\2</div><h'. $htag,
+			'/<\/h'. $htag .'([^>]*)>(.*?)<h'. $htag .'/is',
+			'</h'. $htag .'\1><div class="sweet content div">\2</div><h'. $htag,
 			$content
 			);
 		return $content;
