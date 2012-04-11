@@ -3,9 +3,10 @@ class bSuite_Innerindex
 {
 	function __construct()
 	{
-		add_shortcode('innerindex', array($this, 'shortcode'));
-		add_filter('content_save_pre', array($this, 'nametags'));
-		add_filter('save_post', array($this, 'delete_cache'));
+		add_shortcode( 'innerindex' , array( $this, 'shortcode' ));
+		add_filter( 'content_save_pre' , array( $this, 'nametags' ) , 3 );
+		add_filter( 'content_save_pre' , array( $this, 'addsections' ) , 7 );
+		add_filter( 'save_post' , array( $this , 'delete_cache' ));
 		$this->allowedposttags(); // allow IDs on H1-H6 tags
 	}
 
@@ -38,7 +39,7 @@ class bSuite_Innerindex
 		return( $prefix . str_replace( '%%the_permalink%%', get_permalink( $id ), $menu ) . $suffix );
 	}
 
-	function build($content)
+	function build( $content )
 	{
 		// find <h*> tags with IDs in the content and build an index of them
 		preg_match_all(
@@ -100,25 +101,42 @@ class bSuite_Innerindex
 		// find <h*> tags in the content
 		$content = preg_replace_callback(
 			"/(\<h([0-9])?([^\>]*)?\>)(.*?)(\<\/h[0-9]\>)/",
-			array(&$this,'nametags_callback'),
+			array( $this , 'nametags_callback' ),
 			$content
 			);
-		return($content);
+		return $content;
 	}
 
 	function nametags_callback( $content )
 	{
-		// receive <h*> tags and insert the ID
-		static $slugs;
-		$slugs[] = $slug = substr( sanitize_title_with_dashes( $content[4] ), 0, 30);
-		$count = count( array_keys( $slugs, $slug ));
-		$content = '<h'. $content[2] .' id="'. $slug . ( 1 < $count ? $count : '' ) .'" '. trim( preg_replace( '/id[^"]*"[^"]*"/', '', $content[3] )) .'>'. $content[4] . $content[5];
-		return($content);
-	}
-	// end innerindex-related
+		// track the different levels of h tags
+		$this->hlevels[] = (int) $content[2];
 
-	function allowedposttags() {
+		// receive <h*> tags and insert the ID
+		$this->slugs[] = $slug = substr( sanitize_title_with_dashes( $content[4] ), 0, 30);
+		$count = count( array_keys( $slugs , $slug ));
+		$content = '<h'. $content[2] .' id="'. $slug . ( 1 < $count ? $count : '' ) .'" '. trim( preg_replace( '/id[^"]*"[^"]*"/', '', $content[3] )) .'>'. $content[4] . $content[5];
+		return $content;
+	}
+
+	function addsections( $content )
+	{
+		// what's the highest level tag?
+		$htag = min( $this->hlevels );
+
+		// find <h*> tags in the content
+		$content = preg_replace(
+			'/<h'. $htag .'([^>]*)>(.*?)<h'. $htag .'/is',
+			'<h'. $htag .'\1><div>\2</div><h'. $htag,
+			$content
+			);
+		return $content;
+	}
+
+	function allowedposttags()
+	{
 		global $allowedposttags;
+
 		$allowedposttags['h1']['id'] = array();
 		$allowedposttags['h1']['class'] = array();
 		$allowedposttags['h2']['id'] = array();
@@ -131,7 +149,8 @@ class bSuite_Innerindex
 		$allowedposttags['h5']['class'] = array();
 		$allowedposttags['h6']['id'] = array();
 		$allowedposttags['h6']['class'] = array();
-		return(TRUE);
+
+		return;
 	}
 }
 $bbuite_innerindex = new bSuite_Innerindex;
