@@ -78,6 +78,7 @@ else if($_REQUEST['Options'] == __('PHP Info'))
 
 <table class="form-table">
 
+<!--
 <tr>
 <th scope="row" class="th-full">
 <label for="bcms_insert_related">
@@ -87,6 +88,7 @@ else if($_REQUEST['Options'] == __('PHP Info'))
 </th>
 </tr>
 <tr>
+-->
 
 <tr>
 <th scope="row" class="th-full">
@@ -98,6 +100,7 @@ else if($_REQUEST['Options'] == __('PHP Info'))
 </tr>
 <tr>
 
+<!--
 <tr>
 <th scope="row" class="th-full">
 <label for="bcms_swhl">
@@ -107,10 +110,11 @@ else if($_REQUEST['Options'] == __('PHP Info'))
 </th>
 </tr>
 <tr>
+-->
 
 </table>
 
-
+<!--
 <table class="form-table">
 <tr valign="top">
 <th scope="row"><?php _e('Management focus') ?></th>
@@ -126,6 +130,7 @@ else if($_REQUEST['Options'] == __('PHP Info'))
 </td>
 </tr>
 </table>
+-->
 
 <p class="submit">
 <input type="submit" name="Submit" value="<?php _e('Save Changes') ?>" class="button" />
@@ -140,7 +145,7 @@ else if($_REQUEST['Options'] == __('PHP Info'))
 <p><?php _e('More information about bCMS is available at <a href="http://maisonbisson.com/bsuite/">MaisonBisson.com</a>.') ?></p>
 
 
-
+<!--
 <h3><?php _e('bCMS Commands') ?></h3>
 <p><?php _e('bCMS will do these things automatically; these buttons are here for the impatient.') ?></p>
 <table class="form-table submit">
@@ -151,6 +156,7 @@ else if($_REQUEST['Options'] == __('PHP Info'))
 </th>
 </tr>
 </table>
+-->
 
 <h3><?php _e('Debugging Tools') ?></h3>
 <p><?php _e('Easy access to information about WordPress and PHP.') ?></p>
