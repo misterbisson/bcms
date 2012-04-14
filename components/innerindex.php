@@ -5,7 +5,7 @@ class bSuite_Innerindex
 	{
 		add_shortcode( 'innerindex' , array( $this, 'shortcode' ));
 		add_filter( 'content_save_pre' , array( $this, 'nametags' ) , 3 );
-		add_filter( 'content_save_pre' , array( $this, 'addsections' ) , 7 );
+//		add_filter( 'content_save_pre' , array( $this, 'addsections' ) , 7 );
 		add_filter( 'save_post' , array( $this , 'delete_cache' ));
 		$this->allowedposttags(); // allow IDs on H1-H6 tags
 	}
