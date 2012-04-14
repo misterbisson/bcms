@@ -18,14 +18,9 @@ class bSuite_PostLoops {
 
 	function bSuite_PostLoops()
 	{
-		global $bsuite;
-
-		$this->path_web = is_object( $bsuite ) ? $bsuite->path_web : get_template_directory_uri();
+		$this->path_web = plugins_url( plugin_basename( dirname( __FILE__ )));
 
 		add_action( 'init', array( &$this, 'init' ));
-
-		add_action( 'preprocess_comment' , array( &$this, 'preprocess_comment' ), 1 );
-		add_action( 'bsuite_response_sendmessage' , array( &$this, 'sendmessage' ), 1, 2 );
 
 		add_action( 'template_redirect' , array( &$this, 'get_default_posts' ), 0 );
 	}
@@ -49,7 +44,7 @@ class bSuite_PostLoops {
 
 	function admin_init()
 	{
-		wp_register_script( 'postloop-editwidgets', $this->path_web . '/components/js/edit_widgets.js', array('jquery'), '2' );
+		wp_register_script( 'postloop-editwidgets', $this->path_web . '/js/edit_widgets.js', array('jquery'), '2' );
 		wp_enqueue_script( 'postloop-editwidgets' );
 
 		add_action( 'admin_footer', array( &$this, 'footer_activatejs' ));
@@ -288,77 +283,6 @@ class bSuite_PostLoops {
 		return( $comment );
 	}
 
-	function sendmessage( $comment , $input )
-	{
-		add_action( 'comment_post', array( &$this, '_sendmessage' ));
-		add_filter( 'pre_comment_approved', create_function( '$a', 'return \'message\';'), 1 );
-	}
-
-	function _sendmessage( $comment_id , $approved )
-	{
-		if ( 'spam' == $approved )
-			return;
-
-		$also_notify = sanitize_email( $this->instances_response[ $_REQUEST['bsuite_responsekey'] ]['email'] );
-
-		$comment = get_comment( $comment_id );
-		$post    = get_post( $comment->comment_post_ID );
-		$user    = get_userdata( $post->post_author );
-		$current_user = wp_get_current_user();
-	
-		if(( '' == $also_notify ) && ('' == $user->user_email )) return false; // If there's no email to send the comment to
-	
-		$comment_author_domain = @gethostbyaddr( $comment->comment_author_IP );
-	
-		$blogname = get_option('blogname');
-	
-		/* translators: 1: post id, 2: post title */
-		$notify_message  = sprintf( __('New message on %2$s (#%1$s)'), $comment->comment_post_ID, $post->post_title ) . "\r\n\r\n";
-   		$notify_message .= $comment->comment_content . "\r\n\r\n";
-		/* translators: 1: comment author, 2: author IP, 3: author domain */
-		$notify_message .= sprintf( __('Author : %1$s (IP: %2$s , %3$s)'), $comment->comment_author, $comment->comment_author_IP, $comment_author_domain ) . "\r\n";
-		$notify_message .= sprintf( __('E-mail : %s'), $comment->comment_author_email ) . "\r\n";
-		$notify_message .= sprintf( __('URL    : %s'), $comment->comment_author_url ) . "\r\n";
-		$notify_message .=  __('Network location:') . "\r\nhttp://ws.arin.net/cgi-bin/whois.pl?queryinput=$comment->comment_author_IP\r\n\r\n";
-//		$notify_message .= __('You can see all messages on this post here: ') . "\r\n";
-//		$notify_message .= admin_url( '/wp-admin/edit-comments.php?p='. $post->ID ) ."\r\n\r\n";
-
-		/* translators: 1: blog name, 2: post title */
-		$subject = sprintf( __('[%1$s] Message on "%2$s"'), $blogname, $post->post_title );
-	
-	
-		$wp_email = 'wordpress@' . preg_replace('#^www\.#', '', strtolower($_SERVER['SERVER_NAME']));
-	
-		if ( '' == $comment->comment_author )
-		{
-			$from = "From: \"$blogname\" <$wp_email>";
-			if ( '' != $comment->comment_author_email )
-				$reply_to = "Reply-To: $comment->comment_author_email";
-		} else {
-			$from = "From: \"$comment->comment_author\" <$wp_email>";
-			if ( '' != $comment->comment_author_email )
-				$reply_to = "Reply-To: \"$comment->comment_author_email\" <$comment->comment_author_email>";
-		}
-	
-		$message_headers = "$from\n"
-			. "Content-Type: text/plain; charset=\"" . get_option('blog_charset') . "\"\n";
-	
-		if ( isset( $reply_to ))
-			$message_headers .= $reply_to . "\n";
-	
-		$notify_message = apply_filters('comment_notification_text', $notify_message, $comment_id);
-		$subject = apply_filters('comment_notification_subject', $subject, $comment_id);
-		$message_headers = apply_filters('comment_notification_headers', $message_headers, $comment_id);
-
-		if( '' <> $also_notify )
-			@wp_mail( $also_notify , $subject , $notify_message , $message_headers );
-
-		if( $user->user_email )
-			@wp_mail( $user->user_email , $subject , $notify_message , $message_headers );
-
-		die( wp_redirect( get_comment_link( $comment_id )));
-	}
-
 	function restore_current_blog()
 	{
 		if ( function_exists('restore_current_blog') )
@@ -478,15 +402,14 @@ class bSuite_PostLoop_Scroller
 		$this->settings = (object) wp_parse_args( (array) $args , (array) $defaults );
 
 		// get the path to our scripts and styles
-		global $bsuite;
-		$this->path_web = is_object( $bsuite ) ? $bsuite->path_web : get_template_directory_uri();
+		$this->path_web = plugins_url( plugin_basename( dirname( __FILE__ )));
 
 		// register scripts and styles
-		wp_register_script( 'scrollable', $this->path_web . '/components/js/scrollable.min.js', array('jquery'), TRUE );
-		wp_register_style( 'scrollable', $this->path_web .'/components/css/scrollable.css' );
+		wp_register_script( 'scrollable', $this->path_web . '/js/scrollable.min.js', array('jquery'), TRUE );
+		wp_register_style( 'scrollable', $this->path_web .'/css/scrollable.css' );
 
 		// register our hook to the named action
-		add_action( $this->settings->actionname , array( &$this, 'do_postloop' ) , 5 , 3 );
+		add_action( $this->settings->actionname , array( $this, 'do_postloop' ) , 5 , 3 );
 	}
 
 	function do_postloop( $action , $ourposts , $postloops )
