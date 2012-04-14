@@ -206,7 +206,7 @@ class bSuite_PostLoops {
 <?php
 	}
 
-	function do_template( $name , $event , $query_object = FALSE , $postloop_object = FALSE )
+	function do_template( $name , $event , $query_object = FALSE , $postloop_object = FALSE , $widget = FALSE )
 	{
 
 		// get the post templates
@@ -258,26 +258,16 @@ class bSuite_PostLoops {
 		return apply_filters( 'bsuite_postloop_actions' , $actions );
 	}
 
-	function do_action( $type , $name , $event , $query_object )
+	function do_action( $type , $name , $event , $query_object , $widget )
 	{
+
+		$this->current->widget = $widget;
+		$this->current->query = $query_object;
 
 		$actions = $this->get_actions( $type );
 
 		if( isset( $actions[ $name ] ) && is_callable( $actions[ $name ]['callback'] ))
-			call_user_func( $actions[ $name ]['callback'] , $name , $event , $query_object , $this );
-	}
-
-	function preprocess_comment( $comment )
-	{
-		$this->get_instances_response();
-
-		do_action(
-			'bsuite_response_'. sanitize_title_with_dashes( preg_replace( '/\.[^\.]*$/' , '', $this->instances_response[ $_REQUEST['bsuite_responsekey'] ]['template'] )),
-			$comment,
-			$this->instances_response[ $_REQUEST['bsuite_responsekey'] ]
-		);
-
-		return( $comment );
+			call_user_func( $actions[ $name ]['callback'] , $name , $event , $query_object , $this  , $widget );
 	}
 
 	function restore_current_blog()
@@ -369,7 +359,7 @@ $postloops = new bSuite_PostLoops();
  * PostLoop Scroller class
  *
  */
-class bSuite_PostLoop_Scroller
+class bCMS_PostLoop_Scroller
 {
 	function __construct( $args = '' )
 	{
@@ -403,46 +393,34 @@ class bSuite_PostLoop_Scroller
 
 		// register scripts and styles
 		wp_register_script( 'scrollable', $this->path_web . '/js/scrollable.min.js', array('jquery'), TRUE );
-		wp_register_style( 'scrollable', $this->path_web .'/css/scrollable.css' );
+		bcms_late_enqueue_script( 'scrollable' );
+		add_filter( 'print_footer_scripts', array( $this, 'print_js' ));
 
-		// register our hook to the named action
-		add_action( $this->settings->actionname , array( $this, 'do_postloop' ) , 5 , 3 );
-	}
-
-	function do_postloop( $action , $ourposts , $postloops )
-	{
-		switch( $action )
+		if( $this->settings->css )
 		{
-			case 'before':
-				bcms_late_enqueue_script( 'scrollable' );
-				if( $this->settings->css )
-					bcms_late_enqueue_style( 'scrollable' );
-				add_filter( 'print_footer_scripts', array( $this, 'print_js' ));
-				break;
+			wp_register_style( 'scrollable', $this->path_web .'/css/scrollable.css' );
+			bcms_late_enqueue_style( 'scrollable' );
 		}
 	}
 
 	function print_js()
 	{
-//$(".scroller").scrollable({circular: true}).navigator("#myNavi").autoscroll({interval: 4000});
-//navigator(".navi");
 ?>
 <script type="text/javascript">	
 	;(function($){
 		$(window).load(function(){
 			// set the size of some items
-			$('.items div').width( $('<?php echo $this->settings->selector; ?>').width() );
-			$('<?php echo $this->settings->selector; ?>').height( $('.items div').height() );
+			$('<?php echo $this->settings->child_selector; ?>').width( $('<?php echo $this->settings->parent_selector; ?>').width() );
+			$('<?php echo $this->settings->parent_selector; ?>').height( $('<?php echo $this->settings->child_selector; ?>').height() );
 
 			// initialize scrollable
-			$('<?php echo $this->settings->selector; ?>').scrollable({ circular: true }).navigator().autoscroll(<?php echo json_encode( $this->settings->autoscroll ); ?>)
+			$('<?php echo $this->settings->parent_selector; ?>').scrollable({ circular: true }).navigator().autoscroll(<?php echo json_encode( $this->settings->autoscroll ); ?>)
 		});
 	})(jQuery);
 </script>
 <?php
 	}
 }
-new bSuite_PostLoop_Scroller();
 
 
 
@@ -741,11 +719,11 @@ class bSuite_Widget_PostLoop extends WP_Widget
 			$offset_run = $offset_now = 1;
 
 			// old actions
-			$action_name = sanitize_title( basename( $instance['template'] , '.php' ));
+			$action_name = 'postloop_'. sanitize_title( basename( $instance['template'] , '.php' ));
 			do_action( $action_name , 'before' , $ourposts , $postloops );
 
 			// new actions
-			$postloops->do_action( 'post' , $instance['template'], 'before' , $ourposts );
+			$postloops->do_action( 'post' , $instance['template'], 'before' , $ourposts , $this );
 
 			while( $ourposts->have_posts() )
 			{
@@ -788,7 +766,7 @@ class bSuite_Widget_PostLoop extends WP_Widget
 				do_action( $action_name , 'post' , $ourposts , $postloops );
 
 				// new actions
-				$postloops->do_action( 'post' , $instance['template'] , '' , $ourposts );
+				$postloops->do_action( 'post' , $instance['template'] , '' , $ourposts , $this );
 
 			}
 
@@ -796,7 +774,7 @@ class bSuite_Widget_PostLoop extends WP_Widget
 			do_action( $action_name , 'after' , $ourposts , $postloops );
 
 			// new actions
-			$postloops->do_action( 'post' , $instance['template'] , 'after' , $ourposts );
+			$postloops->do_action( 'post' , $instance['template'] , 'after' , $ourposts , $this );
 
 			echo $after_widget;
 		}
