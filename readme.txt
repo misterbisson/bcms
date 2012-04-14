@@ -37,6 +37,10 @@ Built-in shortcodes allow you to:
 1. Automatically build an index of headings on a page and create a table of contents to it (with links to anchors on the page)
 1. Embed a list of pages or sub-pages on a page or post
 
+= History =
+
+The bCMS plugin is derived from bSuite and includes many of the content management features and none of the cruft from that plugin.
+
 == Installation ==
 
 1. Place the plugin folder in your `wp-content/plugins/` directory and activate it.
