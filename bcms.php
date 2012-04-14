@@ -16,6 +16,9 @@ require_once( dirname( __FILE__ ) .'/components/postloops.php' );
 require_once( dirname( __FILE__ ) .'/components/wijax.php' );
 require_once( dirname( __FILE__ ) .'/components/late-enqueue.php' );
 
+// override the URL path by setting it in the object as such:
+// $postloops->path_web = 
+
 // include the CMS convenience features
 require_once( dirname( __FILE__ ) .'/components/cms-widgets.php' );
 require_once( dirname( __FILE__ ) .'/components/innerindex.php');
