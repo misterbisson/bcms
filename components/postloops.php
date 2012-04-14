@@ -35,9 +35,6 @@ class bSuite_PostLoops {
 
 		$this->get_instances();
 
-//		$this->get_templates( 'post' );
-//		$this->get_templates( 'response' );
-
 		add_action( 'admin_init', array(&$this, 'admin_init' ));
 //		add_filter( 'posts_request' , array( &$this , 'posts_request' ));
 	}
@@ -453,13 +450,14 @@ new bSuite_PostLoop_Scroller();
  * PostLoop widget class
  *
  */
-class bSuite_Widget_PostLoop extends WP_Widget {
+class bSuite_Widget_PostLoop extends WP_Widget
+{
 
-	function bSuite_Widget_PostLoop() {
+	function bSuite_Widget_PostLoop()
+	{
+
 		$widget_ops = array('classname' => 'widget_postloop', 'description' => __( 'Build your own post loop') );
 		$this->WP_Widget('postloop', __('Post Loop'), $widget_ops);
-
-		global $postloops;
 
 		add_filter( 'wijax-actions' , array( $this , 'wjiax_actions' ) );
 	}
@@ -473,7 +471,8 @@ class bSuite_Widget_PostLoop extends WP_Widget {
 		return $actions;
 	}
 
-	function widget( $args, $instance ) {
+	function widget( $args, $instance )
+	{
 		global $bsuite, $postloops, $wpdb, $blog_id, $mywijax;
 
 		$this->wijax_varname = $mywijax->encoded_name( $this->id );
