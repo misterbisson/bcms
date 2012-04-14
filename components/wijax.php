@@ -3,20 +3,19 @@
  * Wijax class
  *
  */
-class bSuite_Wijax {
+class bSuite_Wijax
+{
 	var $ep_name = 'wijax';
 	var $salt = '';
 	var $allow_plaintext = TRUE;
 
-	function bSuite_Wijax()
+	function __construct()
 	{
-		global $bsuite;
+		$this->path_web = plugins_url( plugin_basename( dirname( __FILE__ )));
 
-		$this->path_web = is_object( $bsuite ) ? $bsuite->path_web : get_template_directory_uri();
-
-		add_action( 'init', array( &$this, 'init' ));
-		add_action( 'widgets_init', array( &$this , 'widgets_init' ) , 11 );
-		add_filter( 'query_vars', array( &$this, 'add_query_var' ));
+		add_action( 'init', array( $this, 'init' ));
+		add_action( 'widgets_init', array( $this , 'widgets_init' ) , 11 );
+		add_filter( 'query_vars', array( $this, 'add_query_var' ));
 	}
 
 	function init()
@@ -27,7 +26,7 @@ class bSuite_Wijax {
 
 		if( ! is_admin())
 		{
-			wp_register_script( 'waypoints', $this->path_web . '/components/js/waypoints.min.js', array('jquery'), '1' );
+			wp_register_script( 'waypoints', $this->path_web . '/js/waypoints.min.js', array('jquery'), '1' );
 			wp_enqueue_script( 'waypoints' );
 			add_filter( 'print_footer_scripts', array( &$this, 'print_js' ));
 		}
@@ -344,7 +343,7 @@ class Wijax_Widget extends WP_Widget
 		$loadtime = ($instance['loadtime']) ? $instance['loadtime'] : 'onload';
 ?>
 		<span class="wijax-loading">
-			<img src="<?php echo $mywijax->path_web  .'/components/img/loading-gray.gif'; ?>" alt="loading external resource" />
+			<img src="<?php echo $mywijax->path_web  .'/img/loading-gray.gif'; ?>" alt="loading external resource" />
 			<a href="<?php echo $wijax_source; ?>" class="wijax-source <?php echo 'wijax-' . $loadtime;?>" rel="nofollow"></a>
 			<span class="wijax-opts" style="display: none;">
 				<?php echo json_encode( array( 
