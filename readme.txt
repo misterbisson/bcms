@@ -12,14 +12,6 @@ A suite of tools that improve WordPress' CMS capabilities.
 
 Make WordPress a better CMS. Create a post loop in a widget. Lazy load widgets. More shortcodes. More good.
 
-= Stats =
-
-1. Tracks page loads across your WordPress site
-1. Works with caching plugins
-1. Shows you what's popular, what's growing in popularity, and what's declining
-1. Shows you what categories and tags are most popular
-1. Tracks the search terms readers use to find your site (and highlights those terms on the page)
-
 = Widgets =
 
 bCMS widgets include: 
