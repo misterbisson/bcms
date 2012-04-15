@@ -1,7 +1,7 @@
 === bCMS ===
 Contributors: misterbisson
 Donate link: http://MaisonBisson.com/
-Tags: cms, content management, formatting, widgets, shortcodes, post loop, post, posts, page, pages, show posts, scroller, featured posts
+Tags: bSuite, cms, content management, formatting, widgets, shortcodes, post loop, post, posts, page, pages, show posts, scroller, featured posts
 Requires at least: 3.3
 Tested up to: 3.3.1
 Stable tag: trunk
@@ -27,7 +27,7 @@ Make WordPress a better CMS. Create a post loop in a widget. Lazy load widgets. 
 
 = History =
 
-The bCMS plugin is derived from bSuite and includes many of the content management features and none of the cruft from that plugin.
+The bCMS plugin is derived from bSuite and includes many of the content management features and none of the cruft from that plugin. See <a href="http://wordpress.org/extend/plugins/tags/facebook">the whole family of bSuite plugins</a>.
 
 == Installation ==
 
