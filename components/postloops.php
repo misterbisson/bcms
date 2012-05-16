@@ -431,6 +431,9 @@ class bCMS_PostLoop_Scroller
 class bSuite_Widget_PostLoop extends WP_Widget
 {
 
+	var $ttl = 3607; // a prime number slightly longer than one hour
+
+
 	function bSuite_Widget_PostLoop()
 	{
 
@@ -689,18 +692,32 @@ class bSuite_Widget_PostLoop extends WP_Widget
 				);
 			}
 
+			//echo '<pre>'. print_r( $instance , TRUE ) .'</pre>';
+			//echo '<pre>'. print_r( $criteria , TRUE ) .'</pre>';
 
-//echo '<pre>'. print_r( $instance , TRUE ) .'</pre>';
-//echo '<pre>'. print_r( $criteria , TRUE ) .'</pre>';
-			if( 0 < $instance['blog'] && $instance['blog'] !== $blog_id )
-				switch_to_blog( $instance['blog'] ); // switch to the other blog
+			// check the cache for posts
+			// we only check the cache for custom post loops,
+			// as the default loop is already queried and nobody wants to waste the effort
+			$cachekey = md5( serialize( $criteria ) . serialize( $instance ));
+			if( ! $contents = wp_cache_get( $cachekey , 'bcmspostloop' ))
+			{
+				echo '<!-- postloop generated fresh on '. date(DATE_RFC822) .' -->';
+				if( 0 < $instance['blog'] && $instance['blog'] !== $blog_id )
+					switch_to_blog( $instance['blog'] ); // switch to the other blog
+	
+				// no cache exists, executing the query
+				$ourposts = new WP_Query( $criteria );
+				//print_r( $ourposts );
+				//echo '<pre>'. print_r( $ourposts , TRUE ) .'</pre>';
+			}
+			else
+			{
+				echo '<!-- postloop fetched from cache -->';
+			}
 
-			$ourposts = new WP_Query( $criteria );
-//print_r( $ourposts );
-//echo '<pre>'. print_r( $ourposts , TRUE ) .'</pre>';
 		}
 
-		if( $ourposts->have_posts() )
+		if( ! $contents && $ourposts->have_posts() )
 		{
 
 			// get the templates, thumbnail size, and other stuff
@@ -776,22 +793,27 @@ class bSuite_Widget_PostLoop extends WP_Widget
 			$contents = ob_get_clean();
 			// end process the loop
 
+			$postloops->restore_current_blog();
+		}
 
+		if( $contents )
+		{
 			// figure out what classes to put on the widget
 			$extra_classes = array();
 			$extra_classes[] = str_replace( '9spot', 'nines' , sanitize_title_with_dashes( $this->post_templates[ $instance['template'] ]['name'] ));
 			$extra_classes[] = 'widget-post_loop-'. sanitize_title_with_dashes( $instance['title'] );
-
+	
 			// output the widget
 			echo str_replace( 'class="', 'class="'. implode( ' ' , $extra_classes ) .' ' , $before_widget );
 			$title = apply_filters( 'widget_title', empty( $instance['title'] ) ? '' : $instance['title'] );
 			if ( $instance['title_show'] && $title )
 				echo $before_title . $title . $after_title .'<div class="widget_subtitle">'. $instance['subtitle'] .'</div>';
-
+	
 			echo $contents . $after_widget;
-		}
 
-		$postloops->restore_current_blog();
+			if( isset( $cachekey ))
+				wp_cache_set( $cachekey , $contents , 'bcmspostloop' , $this->ttl );
+		}
 
 		unset( $postloops->current_postloop );
 
