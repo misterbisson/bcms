@@ -703,21 +703,15 @@ class bSuite_Widget_PostLoop extends WP_Widget
 		if( $ourposts->have_posts() )
 		{
 
+			// get the templates, thumbnail size, and other stuff
 			$this->post_templates = (array) $postloops->get_templates('post');
 
 			$postloops->current_postloop = $instance;
 
 			$postloops->thumbnail_size = isset( $instance['thumbnail_size'] ) ? $instance['thumbnail_size'] : 'nines-thumbnail-small';
 
-			$extra_classes = array();
-
-			$extra_classes[] = str_replace( '9spot', 'nines' , sanitize_title_with_dashes( $this->post_templates[ $instance['template'] ]['name'] ));
-			$extra_classes[] = 'widget-post_loop-'. sanitize_title_with_dashes( $instance['title'] );
-
-			echo str_replace( 'class="', 'class="'. implode( ' ' , $extra_classes ) .' ' , $before_widget );
-			$title = apply_filters( 'widget_title', empty( $instance['title'] ) ? '' : $instance['title'] );
-			if ( $instance['title_show'] && $title )
-				echo $before_title . $title . $after_title .'<div class="widget_subtitle">'. $instance['subtitle'] .'</div>';
+			// open an output buffer and start processing the loop
+			ob_start();
 
 			$offset_run = $offset_now = 1;
 
@@ -779,7 +773,22 @@ class bSuite_Widget_PostLoop extends WP_Widget
 			// new actions
 			$postloops->do_action( 'post' , $instance['template'] , 'after' , $ourposts , $this );
 
-			echo $after_widget;
+			$contents = ob_get_clean();
+			// end process the loop
+
+
+			// figure out what classes to put on the widget
+			$extra_classes = array();
+			$extra_classes[] = str_replace( '9spot', 'nines' , sanitize_title_with_dashes( $this->post_templates[ $instance['template'] ]['name'] ));
+			$extra_classes[] = 'widget-post_loop-'. sanitize_title_with_dashes( $instance['title'] );
+
+			// output the widget
+			echo str_replace( 'class="', 'class="'. implode( ' ' , $extra_classes ) .' ' , $before_widget );
+			$title = apply_filters( 'widget_title', empty( $instance['title'] ) ? '' : $instance['title'] );
+			if ( $instance['title_show'] && $title )
+				echo $before_title . $title . $after_title .'<div class="widget_subtitle">'. $instance['subtitle'] .'</div>';
+
+			echo $contents . $after_widget;
 		}
 
 		$postloops->restore_current_blog();
