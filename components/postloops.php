@@ -459,7 +459,7 @@ class bSuite_Widget_PostLoop extends WP_Widget
 
 		$title = apply_filters('widget_title', empty( $instance['title'] ) ? '' : $instance['title']);
 
-		if( 'normal' == $instance['query'] | 'normal' == $instance['what'] )
+		if( 'normal' == $instance['query'] || 'normal' == $instance['what'] )
 		{
 			wp_reset_query();
 			global $wp_query;
