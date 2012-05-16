@@ -9,10 +9,10 @@ class bSuite_PostLoops {
 	var $instances;
 
 	// posts matched by various instances of the widget
-	var $posts; // $posts[ $loop_id ][ $blog_id ] = $post_id
+	var $posts; // $posts[ $loop_id ] = $post_id
 
 	// terms from the posts in each instance
-	var $terms; // $tags[ $loop_id ][ $blog_id ][ $taxonomy ][ $term_id ] = $count
+	var $terms; // $tags[ $loop_id ][ $taxonomy ][ $term_id ] = $count
 
 	var $thumbnail_size = 'nines-thumbnail-small'; // the default thumbnail size
 
@@ -57,12 +57,12 @@ class bSuite_PostLoops {
 
 	function get_default_posts()
 	{
-		global $wp_query, $blog_id;
+		global $wp_query;
 
 		foreach( $wp_query->posts as $post )
 		{
 			// get the matching post IDs for the $postloops object
-			$this->posts[-1][ $blog_id ][] = $post->ID;
+			$this->posts[-1][] = $post->ID;
 			
 			// get the matching terms by taxonomy
 			$terms = get_object_term_cache( $post->ID, (array) get_object_taxonomies( $post->post_type ) );
@@ -87,14 +87,11 @@ class bSuite_PostLoops {
 
 	function get_instances()
 	{
-		global $blog_id;
-
 		$options = get_option( 'widget_postloop' );
 
 		// add an entry for the default conent
 		$options[-1] = array( 
 			'title' => 'The default content',
-			'blog' => absint( $blog_id ),
 		);
 
 		foreach( $options as $number => $option )
@@ -111,14 +108,11 @@ class bSuite_PostLoops {
 
 	function get_instances_response()
 	{
-		global $blog_id;
-
 		$options = get_option( 'widget_responseloop' );
 
 		// add an entry for the default conent
 		$options[-1] = array( 
 			'title' => 'The default content',
-			'blog' => absint( $blog_id ),
 		);
 
 		foreach( $options as $number => $option )
@@ -268,13 +262,6 @@ class bSuite_PostLoops {
 
 		if( isset( $actions[ $name ] ) && is_callable( $actions[ $name ]['callback'] ))
 			call_user_func( $actions[ $name ]['callback'] , $name , $event , $query_object , $this  , $widget );
-	}
-
-	function restore_current_blog()
-	{
-		if ( function_exists('restore_current_blog') )
-			return restore_current_blog();
-		return TRUE;
 	}
 
 	function posts_where_comments_yes_once( $sql )
@@ -454,7 +441,7 @@ class bSuite_Widget_PostLoop extends WP_Widget
 
 	function widget( $args, $instance )
 	{
-		global $bsuite, $postloops, $wpdb, $blog_id, $mywijax;
+		global $bsuite, $postloops, $wpdb, $mywijax;
 
 		$this->wijax_varname = $mywijax->encoded_name( $this->id );
 
@@ -663,10 +650,10 @@ class bSuite_Widget_PostLoop extends WP_Widget
 			{
 				foreach( $instance['relatedto'] as $related_loop => $temp )
 				{
-					if( isset( $postloops->posts[ $related_loop ] ) && $instance['blog'] == key( $postloops->posts[ $related_loop ] ))
-						$criteria['post__not_in'] = array_merge( (array) $criteria['post__not_in'] , $postloops->posts[ $related_loop ][ $instance['blog'] ] );
+					if( isset( $postloops->posts[ $related_loop ] ))
+						$criteria['post__not_in'] = array_merge( (array) $criteria['post__not_in'] , $postloops->posts[ $related_loop ] );
 					else
-						echo '<!-- error: related post loop is not available or not from this blog -->';
+						echo '<!-- error: related post loop is not available -->';
 				}
 			}
 			else if( 'similar' == $instance['relationship'] && count( (array) $instance['relatedto'] ))
@@ -676,10 +663,10 @@ class bSuite_Widget_PostLoop extends WP_Widget
 
 				foreach( $instance['relatedto'] as $related_loop => $temp )
 				{
-					if( isset( $postloops->posts[ $related_loop ] ) && $instance['blog'] == key( $postloops->posts[ $related_loop ] ))
-						$posts_for_related = array_merge( (array) $posts_for_related , $postloops->posts[ $related_loop ][ $instance['blog'] ] );
+					if( isset( $postloops->posts[ $related_loop ] ))
+						$posts_for_related = array_merge( (array) $posts_for_related , $postloops->posts[ $related_loop ] );
 					else
-						echo '<!-- error: related post loop is not available or not from this blog -->';
+						echo '<!-- error: related post loop is not available -->';
 				}
 
 				$count = ceil( 1.5 * $instance['count'] );
@@ -701,12 +688,10 @@ class bSuite_Widget_PostLoop extends WP_Widget
 			$cachekey = md5( serialize( $criteria ) . serialize( $instance ));
 			if( ! $contents = wp_cache_get( $cachekey , 'bcmspostloop' ))
 			{
-				echo '<!-- postloop generated fresh on '. date(DATE_RFC822) .' -->';
-				if( 0 < $instance['blog'] && $instance['blog'] !== $blog_id )
-					switch_to_blog( $instance['blog'] ); // switch to the other blog
-	
 				// no cache exists, executing the query
 				$ourposts = new WP_Query( $criteria );
+
+				echo '<!-- postloop generated fresh on '. date(DATE_RFC822) .' -->';
 				//print_r( $ourposts );
 				//echo '<pre>'. print_r( $ourposts , TRUE ) .'</pre>';
 			}
@@ -762,10 +747,8 @@ class bSuite_Widget_PostLoop extends WP_Widget
 
 				global $id, $post;
 
-				$instance['blog'] = absint( $instance['blog'] );
-
 				// get the matching post IDs for the $postloops object
-				$postloops->posts[ $this->number ][ $instance['blog'] ][] = $id;
+				$postloops->posts[ $this->number ][] = $id;
 
 				// get the matching terms by taxonomy
 				$terms = get_object_term_cache( $id, (array) get_object_taxonomies( $post->post_type ) );
@@ -792,8 +775,6 @@ class bSuite_Widget_PostLoop extends WP_Widget
 
 			$contents = ob_get_clean();
 			// end process the loop
-
-			$postloops->restore_current_blog();
 		}
 
 		if( $contents )
@@ -821,7 +802,6 @@ class bSuite_Widget_PostLoop extends WP_Widget
 	}
 
 	function update( $new_instance, $old_instance ) {
-		global $blog_id;
 
 		$instance = $old_instance;
 
@@ -833,70 +813,64 @@ class bSuite_Widget_PostLoop extends WP_Widget
 
 		$instance['what'] = (array) array_intersect( (array) $this->get_post_types() , array_keys( $new_instance['what'] ));
 
-		if( $this->control_blogs( $instance , FALSE , FALSE )) // check if the user has permissions to the previously set blog
+
+		$instance['categoriesbool'] = in_array( $new_instance['categoriesbool'], array( 'in', 'and', 'not_in') ) ? $new_instance['categoriesbool']: '';
+		$instance['categories_in'] = array_filter( array_map( 'absint', $new_instance['categories_in'] ));
+		$instance['categories_in_related'] = (int) $new_instance['categories_in_related'];
+		$instance['categories_not_in'] = array_filter( array_map( 'absint', $new_instance['categories_not_in'] ));
+		$instance['categories_not_in_related'] = (int) $new_instance['categories_not_in_related'];
+		$instance['tagsbool'] = in_array( $new_instance['tagsbool'], array( 'in', 'and', 'not_in') ) ? $new_instance['tagsbool']: '';
+		$tag_name = '';
+		$instance['tags_in'] = array();
+		foreach( array_filter( array_map( 'trim', array_map( 'wp_filter_nohtml_kses', explode( ',', $new_instance['tags_in'] )))) as $tag_name )
 		{
-
-			$new_instance['blog'] = absint( $new_instance['blog'] );
-			if( $this->control_blogs( $new_instance , FALSE , FALSE )) // check if the user has permissions to the wished-for blog
-				$instance['blog'] = $new_instance['blog'];
-
-			$instance['categoriesbool'] = in_array( $new_instance['categoriesbool'], array( 'in', 'and', 'not_in') ) ? $new_instance['categoriesbool']: '';
-			$instance['categories_in'] = array_filter( array_map( 'absint', $new_instance['categories_in'] ));
-			$instance['categories_in_related'] = (int) $new_instance['categories_in_related'];
-			$instance['categories_not_in'] = array_filter( array_map( 'absint', $new_instance['categories_not_in'] ));
-			$instance['categories_not_in_related'] = (int) $new_instance['categories_not_in_related'];
-			$instance['tagsbool'] = in_array( $new_instance['tagsbool'], array( 'in', 'and', 'not_in') ) ? $new_instance['tagsbool']: '';
-			$tag_name = '';
-			$instance['tags_in'] = array();
-			foreach( array_filter( array_map( 'trim', array_map( 'wp_filter_nohtml_kses', explode( ',', $new_instance['tags_in'] )))) as $tag_name )
-			{
-				if( $temp = is_term( $tag_name, 'post_tag' ))
-					$instance['tags_in'][] = $temp['term_id'];
-			}
-			$instance['tags_in_related'] = (int) $new_instance['tags_in_related'];
-			$tag_name = '';
-			$instance['tags_not_in'] = array();
-			foreach( array_filter( array_map( 'trim', array_map( 'wp_filter_nohtml_kses', explode( ',', $new_instance['tags_not_in'] )))) as $tag_name )
-			{
-				if( $temp = is_term( $tag_name, 'post_tag' ))
-					$instance['tags_not_in'][] = $temp['term_id'];
-			}
-			$instance['tags_not_in_related'] = (int) $new_instance['tags_not_in_related'];
-
-			if( $instance['what'] <> 'normal' )
-			{
-				foreach( get_object_taxonomies( $instance['what'] ) as $taxonomy )
-				{
-					if( $taxonomy == 'category' || $taxonomy == 'post_tag' )
-						continue;
-
-					$instance['tax_'. $taxonomy .'_bool'] = in_array( $new_instance['tax_'. $taxonomy .'_bool'], array( 'in', 'and', 'not_in') ) ? $new_instance['tax_'. $taxonomy .'_bool']: '';
-					$tag_name = '';
-					$instance['tax_'. $taxonomy .'_in'] = array();
-					foreach( array_filter( array_map( 'trim', array_map( 'wp_filter_nohtml_kses', explode( ',', $new_instance['tax_'. $taxonomy .'_in'] )))) as $tag_name )
-					{
-						if( $temp = is_term( $tag_name, $taxonomy ))
-							$instance['tax_'. $taxonomy .'_in'][] = $temp['term_id'];
-					}
-
-					$instance['tax_'. $taxonomy .'_in_related'] = (int) $new_instance['tax_'. $taxonomy .'_in_related'];
-
-					$tag_name = '';
-					$instance['tax_'. $taxonomy .'_not_in'] = array();
-					foreach( array_filter( array_map( 'trim', array_map( 'wp_filter_nohtml_kses', explode( ',', $new_instance['tax_'. $taxonomy .'_not_in'] )))) as $tag_name )
-					{
-						if( $temp = is_term( $tag_name, $taxonomy ))
-							$instance['tax_'. $taxonomy .'_not_in'][] = $temp['term_id'];
-					}
-
-					$instance['tax_'. $taxonomy .'_not_in_related'] = (int) $new_instance['tax_'. $taxonomy .'_not_in_related'];
-				}
-			}
-
-			$instance['post__in'] = array_filter( array_map( 'absint', explode( ',', $new_instance['post__in'] )));
-			$instance['post__not_in'] = array_filter( array_map( 'absint', explode( ',', $new_instance['post__not_in'] )));
-			$instance['comments'] = in_array( $new_instance['comments'], array( 'unset', 'yes', 'no' ) ) ? $new_instance['comments']: '';
+			if( $temp = is_term( $tag_name, 'post_tag' ))
+				$instance['tags_in'][] = $temp['term_id'];
 		}
+		$instance['tags_in_related'] = (int) $new_instance['tags_in_related'];
+		$tag_name = '';
+		$instance['tags_not_in'] = array();
+		foreach( array_filter( array_map( 'trim', array_map( 'wp_filter_nohtml_kses', explode( ',', $new_instance['tags_not_in'] )))) as $tag_name )
+		{
+			if( $temp = is_term( $tag_name, 'post_tag' ))
+				$instance['tags_not_in'][] = $temp['term_id'];
+		}
+		$instance['tags_not_in_related'] = (int) $new_instance['tags_not_in_related'];
+
+		if( $instance['what'] <> 'normal' )
+		{
+			foreach( get_object_taxonomies( $instance['what'] ) as $taxonomy )
+			{
+				if( $taxonomy == 'category' || $taxonomy == 'post_tag' )
+					continue;
+
+				$instance['tax_'. $taxonomy .'_bool'] = in_array( $new_instance['tax_'. $taxonomy .'_bool'], array( 'in', 'and', 'not_in') ) ? $new_instance['tax_'. $taxonomy .'_bool']: '';
+				$tag_name = '';
+				$instance['tax_'. $taxonomy .'_in'] = array();
+				foreach( array_filter( array_map( 'trim', array_map( 'wp_filter_nohtml_kses', explode( ',', $new_instance['tax_'. $taxonomy .'_in'] )))) as $tag_name )
+				{
+					if( $temp = is_term( $tag_name, $taxonomy ))
+						$instance['tax_'. $taxonomy .'_in'][] = $temp['term_id'];
+				}
+
+				$instance['tax_'. $taxonomy .'_in_related'] = (int) $new_instance['tax_'. $taxonomy .'_in_related'];
+
+				$tag_name = '';
+				$instance['tax_'. $taxonomy .'_not_in'] = array();
+				foreach( array_filter( array_map( 'trim', array_map( 'wp_filter_nohtml_kses', explode( ',', $new_instance['tax_'. $taxonomy .'_not_in'] )))) as $tag_name )
+				{
+					if( $temp = is_term( $tag_name, $taxonomy ))
+						$instance['tax_'. $taxonomy .'_not_in'][] = $temp['term_id'];
+				}
+
+				$instance['tax_'. $taxonomy .'_not_in_related'] = (int) $new_instance['tax_'. $taxonomy .'_not_in_related'];
+			}
+		}
+
+		$instance['post__in'] = array_filter( array_map( 'absint', explode( ',', $new_instance['post__in'] )));
+		$instance['post__not_in'] = array_filter( array_map( 'absint', explode( ',', $new_instance['post__not_in'] )));
+		$instance['comments'] = in_array( $new_instance['comments'], array( 'unset', 'yes', 'no' ) ) ? $new_instance['comments']: '';
+
 		$instance['activity'] = in_array( $new_instance['activity'], array( 'pop_most', 'pop_least', 'pop_recent', 'comment_recent', 'comment_few') ) ? $new_instance['activity']: '';
 		$instance['age_bool'] = in_array( $new_instance['age_bool'], array( 'newer', 'older') ) ? $new_instance['age_bool']: '';
 		$instance['age_num'] = absint( $new_instance['age_num'] );
@@ -925,7 +899,7 @@ die;
 	}
 
 	function form( $instance ) {
-		global $blog_id, $postloops, $bsuite;
+		global $postloops, $bsuite;
 
 		// reset the instances var, in case a new widget was added
 		$postloops->get_instances();
@@ -936,7 +910,6 @@ die;
 			array( 
 				'what' => 'normal', 
 				'template' => 'a_default_full.php',
-				'blog' => $blog_id,
 				) 
 			);
 
@@ -980,10 +953,6 @@ die;
 				</p>
 			</div>
 		</div>
-<?php
-		// from what blog?
-		if( $this->control_blogs( $instance )):
-?>
 
 		<div id="<?php echo $this->get_field_id('categories'); ?>-container" class="postloop container hide-if-js <?php echo $this->tax_posttype_classes('category'); ?>">
 			<label for="<?php echo $this->get_field_id('categoriesbool'); ?>"><?php _e( 'Categories' ); ?></label>
@@ -1097,12 +1066,6 @@ die;
 				</p>
 			</div>
 		</div>
-
-<?php 
-		// go back to the other blog
-		endif;
-		$postloops->restore_current_blog(); 
-?>
 
 		<div id="<?php echo $this->get_field_id('age'); ?>-container" class="postloop container hide-if-js querytype_custom posttype_normal">
 			<label for="<?php echo $this->get_field_id('age_num'); ?>"><?php _e('Date published'); ?></label>
@@ -1242,103 +1205,9 @@ die;
 
 
 
-	function control_blogs( $instance , $do_output = TRUE , $switch = TRUE ){
-		/*
-		Return values:
-		TRUE: The user has permission to the currently selected blog
-		FALSE: The user does not have permission to the currently selected blog. This disables post selection criteria so that the unprivileged user can't reveal more posts than the privileged user had previously elected to show.
-		
-		Output:
-		If $do_output is TRUE the function will echo out a select list of blogs available to the user.
-		
-		Blog switching:
-		If $switch is TRUE and the user has permission to the selected blog (and the selected blog is not the current blog), the function will switch to that blog before returning TRUE.
-		*/
-
-		// define( 'BSUITE_ALLOW_BLOG_SWITCH' , FALSE ); to prevent any blog switching
-		if( defined( 'BSUITE_ALLOW_BLOG_SWITCH' ) && ! BSUITE_ALLOW_BLOG_SWITCH )
-			return TRUE; // We might be in MU, but switch_to_blog() isn't allowed
-
-		global $current_user, $blog_id, $bsuite;
-
-		if( is_object( $bsuite ) && ! $bsuite->is_mu )
-			return TRUE; // The user has permission by virtue of it not being MU
-
-		$blogs = $this->get_blog_list( $current_user->ID );
-
-		if( ! $blogs )
-			return TRUE; // There was an error, but we assume the user has permission
-
-		if( ! $instance['blog'] ) // the blog isn't set, so we assume it's the current blog
-			$instance['blog'] = $blog_id;
-
-		foreach( (array) $blogs as $item )
-		{
-			if( $item['blog_id'] == $instance['blog'] ) 
-			{
-				// The user has permisson in here, any return will be TRUE
-				if( count( $blogs ) < 2 ) // user has permission, but there's only one choice
-					return TRUE; // there's only one choice, and the user has permssion to it
-
-				if( $do_output )
-				{
-					echo '<div id="'. $this->get_field_id('blog') .'-container" class="postloop container hide-if-js querytype_custom posttype_normal"><label for="'. $this->get_field_id('blog') .'">'. __( 'From' ) .'</label><div id="'. $this->get_field_id('blog') .'-contents" class="contents hide-if-js"><p><select name="'. $this->get_field_name('blog') .'" id="'. $this->get_field_id('blog') .'" class="widefat">';
-					foreach( $this->get_blog_list( $current_user->ID ) as $blog )
-					{
-							?><option value="<?php echo $blog['blog_id']; ?>" <?php selected( $instance['blog'], $blog['blog_id'] ); ?>><?php echo $blog['blog_id'] == $blog_id ? __('This blog') : $blog['blogname']; ?></option><?php
-					}
-					echo '</select></p></div></div>';
-				}
-
-				if( $switch && ( $instance['blog'] <> $blog_id ))
-					switch_to_blog( $instance['blog'] ); // switch to the other blog
-
-				return TRUE; // the user has permission, and many choices
-			}
-		}
-
-?>
-		<div id="<?php echo $this->get_field_id('blog'); ?>-container" class="postloop container">
-		<p>
-			<label for="<?php echo $this->get_field_id('blog'); ?>"><?php _e( 'From' ); ?></label>
-			<input type="text" value="<?php echo attribute_escape( get_blog_details( $instance['blog'] )->blogname ); ?>" name="<?php echo $this->get_field_name('blog'); ?>" id="<?php echo $this->get_field_id('blog'); ?>" class="widefat" disabled="disabled" />
-		</p>
-		</div>
-<?php
-
-		return FALSE; // the user doesn't have permission to the selected blog
-	}
-
 	function get_post_types()
 	{
 		return get_post_types( array( 'public' => TRUE , 'publicly_queryable' => TRUE , ) , 'names' , 'or' ); // trivia: 'pages' are public, but not publicly queryable
-	}
-
-	function get_blog_list( $current_user_id ){
-		global $current_site, $wpdb;
-
-		if( isset( $this->bloglist ))
-			return $this->bloglist;
-
-		if( is_super_admin() )
-		{
-			// I have to do this because get_blog_list() doesn't allow me to select private blogs
-			// This query only executes for superadmins , and then only if BSUITE_ALLOW_BLOG_SWITCH isn't false
-			foreach( (array) $wpdb->get_results( $wpdb->prepare("SELECT blog_id, public FROM $wpdb->blogs WHERE site_id = %d AND archived = '0' AND mature = '0' AND spam = '0' AND deleted = '0' ORDER BY registered DESC", $wpdb->siteid), ARRAY_A ) as $k => $v )
-			{
-				$this->bloglist[ get_blog_details( $v['blog_id'] )->blogname . $k ] = array( 'blog_id' => $v['blog_id'] , 'blogname' => get_blog_details( $v['blog_id'] )->blogname . ( 1 == $v['public'] ? '' : ' ('. __('private') .')' ) );
-			}
-		}
-		else
-		{
-			foreach( (array) get_blogs_of_user( $current_user_id ) as $k => $v )
-			{
-				$this->bloglist[ get_blog_details( $v->userblog_id )->blogname . $k ] = array( 'blog_id' => $v->userblog_id , 'blogname' => $v->blogname );
-			}
-		}
-
-		ksort( $this->bloglist );
-		return $this->bloglist;
 	}
 
 
