@@ -57,7 +57,6 @@ class bSuite_ChildPosts
 
 	function register_post_type()
 	{
-
 		$taxonomies = get_taxonomies( array( 'public' => true ));
 
 		register_post_type( $this->post_type_name,
@@ -67,12 +66,23 @@ class bSuite_ChildPosts
 					'singular_name' => __( 'Child Post' ),
 				),
 				'supports' => array(
-					'title', 
-					'author', 
+					'title',
+					'editor',
+					'author',
+					'thumbnail',
+					'excerpt',
+					'trackbacks',
+					'custom-fields',
+					'comments',
+					'revisions',
+					'page-attributes',
+					'post-formats',
 				),
 				'register_meta_box_cb' => array( $this , 'register_metaboxes' ),
 				'public' => TRUE,
-				'show_ui' => FALSE,
+				'show_ui' => TRUE,
+//				'show_in_menu' => FALSE,
+//				'show_in_nav_menus' => FALSE,
 				'hierarchical' => TRUE,
 				'taxonomies' => $taxonomies,
 			)

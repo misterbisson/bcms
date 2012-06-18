@@ -21,6 +21,7 @@ require_once( dirname( __FILE__ ) .'/components/late-enqueue.php' );
 // $postloops->path_web = 
 
 // include the CMS convenience features
+require_once( dirname( __FILE__ ) .'/components/child-posts.php' );
 require_once( dirname( __FILE__ ) .'/components/cms-widgets.php' );
 require_once( dirname( __FILE__ ) .'/components/innerindex.php');
 require_once( dirname( __FILE__ ) .'/components/listchildren.php' );
