@@ -685,7 +685,7 @@ class bSuite_Widget_PostLoop extends WP_Widget
 			//echo '<pre>'. print_r( $instance , TRUE ) .'</pre>';
 
 			if( is_user_logged_in() && current_user_can( 'edit_theme_options' ))
-				echo "<!-- postloop criteria \n". print_r( $criteria , TRUE ) .' -->';
+				echo "<!-- postloop criteria \n". esc_html( print_r( $criteria , TRUE )) .' -->';
 
 			// check the cache for posts
 			// we only check the cache for custom post loops,
