@@ -697,8 +697,13 @@ class bSuite_Widget_PostLoop extends WP_Widget
 				$ourposts = new WP_Query( $criteria );
 
 				echo '<!-- postloop generated fresh on '. date(DATE_RFC822) .' -->';
-				//print_r( $ourposts );
-				//echo '<pre>'. print_r( $ourposts , TRUE ) .'</pre>';
+
+				if( is_user_logged_in() && current_user_can( 'edit_theme_options' ))
+				{
+					$debug_copy = clone $ourposts;
+					unset( $debug_copy->post , $debug_copy->posts );
+					echo "<!-- postloop wp_query obj (excludes posts) \n". esc_html( print_r( $debug_copy , TRUE )) .' -->';
+				}
 			}
 			else
 			{
