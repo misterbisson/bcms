@@ -684,6 +684,7 @@ class bSuite_Widget_PostLoop extends WP_Widget
 			//echo '<pre>'. print_r( $postloops , TRUE ) .'</pre>';
 			//echo '<pre>'. print_r( $instance , TRUE ) .'</pre>';
 
+			// print the post selection info for logged-in administrators
 			if( is_user_logged_in() && current_user_can( 'edit_theme_options' ))
 				echo "<!-- postloop criteria \n". esc_html( print_r( $criteria , TRUE )) .' -->';
 
@@ -696,12 +697,24 @@ class bSuite_Widget_PostLoop extends WP_Widget
 				// no cache exists, executing the query
 				$ourposts = new WP_Query( $criteria );
 
-				echo '<!-- postloop generated fresh on '. date(DATE_RFC822) .' -->';
+				echo "\n<!-- postloop generated fresh on ". date(DATE_RFC822) .' -->';
 
+				//echo '<pre>'. print_r( $ourposts , TRUE ) .'</pre>';
+
+				// print the wp_query object for logged-in administrators
 				if( is_user_logged_in() && current_user_can( 'edit_theme_options' ))
 				{
 					$debug_copy = clone $ourposts;
 					unset( $debug_copy->post , $debug_copy->posts );
+					foreach( $debug_copy->posts as $k => $v )
+					{
+						$debug_copy->posts[ $k ] = (object) array( 
+							'ID' => $v->ID , 
+							'post_date' => $v->post_date , 
+							'post_title' => $v->post_title 
+						);
+					}
+
 					echo "<!-- postloop wp_query obj (excludes posts) \n". esc_html( print_r( $debug_copy , TRUE )) .' -->';
 				}
 			}
