@@ -705,7 +705,7 @@ class bSuite_Widget_PostLoop extends WP_Widget
 				if( is_user_logged_in() && current_user_can( 'edit_theme_options' ))
 				{
 					$debug_copy = clone $ourposts;
-					unset( $debug_copy->post , $debug_copy->posts );
+					unset( $debug_copy->post );
 					foreach( $debug_copy->posts as $k => $v )
 					{
 						$debug_copy->posts[ $k ] = (object) array( 
