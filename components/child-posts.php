@@ -81,8 +81,8 @@ class bSuite_ChildPosts
 				'register_meta_box_cb' => array( $this , 'register_metaboxes' ),
 				'public' => TRUE,
 				'show_ui' => TRUE,
-//				'show_in_menu' => FALSE,
-//				'show_in_nav_menus' => FALSE,
+				'show_in_menu' => FALSE,
+				'show_in_nav_menus' => FALSE,
 				'hierarchical' => TRUE,
 				'taxonomies' => $taxonomies,
 			)
@@ -101,6 +101,4 @@ class bSuite_ChildPosts
 
 }//end bSuite_ChildPosts class
 
-
-
-
+new bSuite_ChildPosts;
