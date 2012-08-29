@@ -65,23 +65,19 @@ class bSuite_PostLoops {
 			$this->posts[-1][] = $post->ID;
 			
 			// get the matching terms by taxonomy
-			$terms = get_object_term_cache( $post->ID, (array) get_object_taxonomies( $post->post_type ) );
-			if ( empty( $terms ))
-				$terms = wp_get_object_terms( $post->ID, (array) get_object_taxonomies( $post->post_type ) );
+			$terms = wp_get_object_terms( $post->ID, (array) get_object_taxonomies( $post->post_type ) );
 
 			// get the term taxonomy IDs for the $postloops object
 			foreach( $terms as $term )
 			{
-				if( ! isset( $this->terms[-1][$term->taxonomy] ) ) // initialize
+				if( ! isset( $this->terms[-1][ $term->taxonomy ] ) ) // initialize
 					$this->terms[-1][ $term->taxonomy ] = array();
 
-				if( ! isset( $this->terms[-1][$term->taxonomy][ $term->term_id ] )) // initialize
+				if( ! isset( $this->terms[-1][ $term->taxonomy ][ $term->term_id ] )) // initialize
 					$this->terms[-1][ $term->taxonomy ][ $term->term_id ] = 0;
 
 				$this->terms[-1][ $term->taxonomy ][ $term->term_id ]++; // increment
 			}
-
-
 		}
 	}
 
