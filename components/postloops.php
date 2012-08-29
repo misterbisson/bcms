@@ -3,7 +3,10 @@
  * PostLoops class
  *
  */
-class bSuite_PostLoops {
+class bSuite_PostLoops
+{
+	//cache ttl
+	var $ttl = 14401; // a prime number slightly longer than four hours
 
 	// instances
 	var $instances;
@@ -20,9 +23,9 @@ class bSuite_PostLoops {
 	{
 		$this->path_web = plugins_url( plugin_basename( dirname( __FILE__ )));
 
-		add_action( 'init', array( &$this, 'init' ));
+		add_action( 'init', array( $this, 'init' ));
 
-		add_action( 'template_redirect' , array( &$this, 'get_default_posts' ), 0 );
+		add_action( 'template_redirect' , array( $this, 'get_default_posts' ) , 0 );
 	}
 
 	function init()
@@ -59,6 +62,18 @@ class bSuite_PostLoops {
 	{
 		global $wp_query;
 
+		// test the cache first
+		// this is about 100 to 1000 times faster than the nested loops below
+		$cachekey = md5( serialize( $wp_query->posts ));
+		if( $cached = wp_cache_get( $cachekey , 'bcmsdefaultposts' ))
+		{
+			$this->posts[-1] = $cached['posts'];
+			$this->terms[-1] = $cached['terms'];
+
+			return;
+		}
+
+		// process each post to capture post IDs and terms
 		foreach( $wp_query->posts as $post )
 		{
 			// get the matching post IDs for the $postloops object
@@ -79,6 +94,18 @@ class bSuite_PostLoops {
 				$this->terms[-1][ $term->taxonomy ][ $term->term_id ]++; // increment
 			}
 		}
+
+		// set the cache if we get here
+		wp_cache_set( 
+			$cachekey , 
+			array( 
+				'posts' => $this->posts[-1] , 
+				'terms' => $this->terms[-1] , 
+				'time' => time()
+			) , 
+			'bcmsdefaultposts' , 
+			$this->ttl 
+		);
 	}
 
 	function get_instances()
