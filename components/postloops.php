@@ -272,7 +272,7 @@ class bSuite_PostLoops
 			);
 		}
 
-		return apply_filters( 'bsuite_postloop_actions' , $actions );
+		return apply_filters( 'postloop_actions' , $actions );
 	}
 
 	function do_action( $type , $name , $event , $query_object , $widget )
@@ -709,7 +709,7 @@ class bSuite_Widget_PostLoop extends WP_Widget
 			//echo '<pre>'. print_r( $instance , TRUE ) .'</pre>';
 
 			// allow filtering of the criteria
-			$criteria = apply_filters( 'ploop_criteria' , $criteria , $instance );
+			$criteria = apply_filters( 'postloop_criteria' , $criteria , $instance );
 
 			// print the post selection info for logged-in administrators
 			if( is_user_logged_in() && current_user_can( 'edit_theme_options' ))
