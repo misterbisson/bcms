@@ -608,8 +608,9 @@ class bSuite_Widget_PostLoop extends WP_Widget
 					break;
 			}
 
-			foreach ( get_object_taxonomies('post') as $taxonomy ) {
-				$criteria[$taxonomy] = apply_filters('ploop_taxonomy_'. $taxonomy, $criteria[$taxonomy]);
+			foreach ( get_object_taxonomies('post') as $taxonomy )
+			{
+				$criteria[$taxonomy] = apply_filters( 'ploop_taxonomy_'. $taxonomy , $criteria[ $taxonomy ] );
 			}
 
 			if( 0 < $instance['age_num'] )
@@ -711,6 +712,9 @@ class bSuite_Widget_PostLoop extends WP_Widget
 
 			//echo '<pre>'. print_r( $postloops , TRUE ) .'</pre>';
 			//echo '<pre>'. print_r( $instance , TRUE ) .'</pre>';
+
+			// allow filtering of the criteria
+			$criteria = apply_filters( 'ploop_criteria' , $criteria , $instance );
 
 			// print the post selection info for logged-in administrators
 			if( is_user_logged_in() && current_user_can( 'edit_theme_options' ))
