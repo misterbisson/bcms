@@ -608,11 +608,6 @@ class bSuite_Widget_PostLoop extends WP_Widget
 					break;
 			}
 
-			foreach ( get_object_taxonomies('post') as $taxonomy )
-			{
-				$criteria[$taxonomy] = apply_filters( 'ploop_taxonomy_'. $taxonomy , $criteria[ $taxonomy ] );
-			}
-
 			if( 0 < $instance['age_num'] )
 			{
 				$postloops->date_before = $postloops->date_since = date( 'Y-m-d' , strtotime( $instance['age_num'] .' '. $instance['age_unit'] .' ago' ));
