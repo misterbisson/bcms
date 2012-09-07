@@ -373,6 +373,7 @@ class bCMS_PostLoop_Scroller
 {
 	function __construct( $args = '' )
 	{
+
 		// get settings
 		$defaults = array(
 			// configuration
@@ -425,13 +426,15 @@ class bCMS_PostLoop_Scroller
 
 			// initialize scrollable
 			$('<?php echo $this->settings->parent_selector; ?>').scrollable({ circular: true }).navigator().autoscroll(<?php echo json_encode( $this->settings->autoscroll ); ?>)
+
+			//show the .items divs now that the scrollable is initialized
+			$('<?php echo $this->settings->child_selector; ?>').width( $(window).width() ).show();
 		});
 	})(jQuery);
 </script>
 <?php
 	}
 }
-
 
 
 /**
@@ -757,6 +760,7 @@ class bSuite_Widget_PostLoop extends WP_Widget
 
 			// get the templates, thumbnail size, and other stuff
 			$this->post_templates = (array) $postloops->get_templates('post');
+			$cached->template = $this->post_templates[ $instance['template'] ];
 
 			$postloops->current_postloop = &$instance;
 
@@ -834,7 +838,7 @@ class bSuite_Widget_PostLoop extends WP_Widget
 
 			// figure out what classes to put on the widget
 			$extra_classes = array();
-			$extra_classes[] = str_replace( '9spot', 'nines' , sanitize_title_with_dashes( $this->post_templates[ $instance['template'] ]['name'] ));
+			$extra_classes[] = str_replace( '9spot', 'nines' , sanitize_title_with_dashes( $cached->template['name'] ));
 			$extra_classes[] = 'widget-post_loop-'. sanitize_title_with_dashes( $instance['title'] );
 			$extra_classes = array_merge( $extra_classes , (array) $instance['extra_classes'] );
 
@@ -848,7 +852,7 @@ class bSuite_Widget_PostLoop extends WP_Widget
 			echo $cached->html . $after_widget;
 
 			if( isset( $cachekey ))
-				wp_cache_set( $cachekey , (object) array( 'html' => $cached->html , 'instance' => $instance , 'time' => time() ) , 'bcmspostloop' , $this->ttl );
+				wp_cache_set( $cachekey , (object) array( 'html' => $cached->html , 'template' => $cached->template , 'instance' => $instance , 'time' => time() ) , 'bcmspostloop' , $this->ttl );
 		}
 
 		unset( $postloops->current_postloop );
