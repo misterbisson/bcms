@@ -420,15 +420,21 @@ class bCMS_PostLoop_Scroller
 <script type="text/javascript">	
 	;(function($){
 		$(window).load(function(){
+			var $child = $('<?php echo $this->settings->child_selector; ?>');
+			var $parent = $('<?php echo $this->settings->parent_selector; ?>');
+
 			// set the size of some items
-			$('<?php echo $this->settings->child_selector; ?>').width( $('<?php echo $this->settings->parent_selector; ?>').width() );
-			$('<?php echo $this->settings->parent_selector; ?>').height( $('<?php echo $this->settings->child_selector; ?>').height() );
+			$child.width( $parent.width() );
+			$parent.height( $child.height() );
 
 			// initialize scrollable
-			$('<?php echo $this->settings->parent_selector; ?>').scrollable({ circular: true }).navigator().autoscroll(<?php echo json_encode( $this->settings->autoscroll ); ?>)
+			$parent
+				.scrollable({ circular: true })
+				.navigator()
+				.autoscroll(<?php echo json_encode( $this->settings->autoscroll ); ?>);
 
 			//show the .items divs now that the scrollable is initialized
-			$('<?php echo $this->settings->child_selector; ?>').width( $(window).width() ).show();
+			$child.width( $(window).width() ).show();
 		});
 	})(jQuery);
 </script>
