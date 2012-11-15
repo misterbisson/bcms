@@ -133,7 +133,7 @@ else if($_REQUEST['Options'] == __('PHP Info'))
 -->
 
 <p class="submit">
-<input type="submit" name="Submit" value="<?php _e('Save Changes') ?>" class="button" />
+<input type="submit" name="Submit" value="<?php esc_attr_e('Save Changes') ?>" class="button" />
 </p>
 </form>
 
@@ -152,7 +152,7 @@ else if($_REQUEST['Options'] == __('PHP Info'))
 <tr>
 <th scope="row" class="th-full">
 <form method="post">
-<input type="submit" name="Options" value="<?php _e('Rebuild bCMS search index') ?>" /> &nbsp; 
+<input type="submit" name="Options" value="<?php esc_attr_e('Rebuild bCMS search index') ?>" /> &nbsp; 
 </th>
 </tr>
 </table>
@@ -164,8 +164,8 @@ else if($_REQUEST['Options'] == __('PHP Info'))
 <tr>
 <th scope="row" class="th-full">
 <form method="post">
-<input type="submit" name="Options" value="<?php _e('Show rewrite rules') ?>" /> &nbsp; 
-<input type="submit" name="Options" value="<?php _e('PHP Info') ?>" /></form>
+<input type="submit" name="Options" value="<?php esc_attr_e('Show rewrite rules') ?>" /> &nbsp; 
+<input type="submit" name="Options" value="<?php esc_attr_e('PHP Info') ?>" /></form>
 </th>
 </tr>
 </table>
