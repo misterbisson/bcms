@@ -415,13 +415,21 @@ class bSuite_Widget_Pagednav extends WP_Widget {
 		{
 			$urlbase = preg_replace( '#/page/[0-9]+?(/+)?$#' , '/', remove_query_arg( 'paged' ) );
 			$prettylinks = ( $wp_rewrite->using_permalinks() && ( !strpos( $urlbase , '?' )));
-			
-			$page_links = paginate_links( array(
+
+			$opts = array(
 				'base' => $urlbase . '%_%',
 				'format' => $prettylinks ? user_trailingslashit( trailingslashit( 'page/%#%' )) : ( strpos( $urlbase , '?' ) ? '&paged=%#%' : '?paged=%#%' ),
 				'total' => absint( $wp_query->max_num_pages ),
 				'current' => absint( $wp_query->query_vars['paged'] ) ? absint( $wp_query->query_vars['paged'] ) : 1,
-			));
+			);
+
+			if ( $instance['prev_text'] )
+				$opts['prev_text'] = $instance['prev_text'];
+
+			if ( $instance['next_text'] )
+				$opts['next_text'] = $instance['next_text'];
+
+			$page_links = paginate_links( $opts );
 			
 			if ( $page_links )
 				echo $before_widget . $page_links .'<div class="clear"></div>'. $after_widget;
@@ -438,6 +446,26 @@ class bSuite_Widget_Pagednav extends WP_Widget {
 		}
 	}
 
+	function form( $instance ) {
+		//Defaults
+		$instance = wp_parse_args( (array) $instance, 
+			array( 
+				'prev_text' => null,
+				'next_text' => null,
+			)
+		);
+		$prev_text = esc_attr( $instance['prev_text'] );
+		$next_text = esc_attr( $instance['next_text'] );
+
+		?>
+		<p>
+			<label for="<?php echo $this->get_field_id('prev_text'); ?>"><?php _e('Previous text:'); ?></label> <input class="widefat" id="<?php echo $this->get_field_id('prev_text'); ?>" name="<?php echo $this->get_field_name('prev_text'); ?>" type="text" value="<?php echo $prev_text; ?>" /><br /><small><?php _e( 'Optional, leave empty to use WP default.' ); ?></small>
+		</p>
+		<p>
+			<label for="<?php echo $this->get_field_id('next_text'); ?>"><?php _e('Next text:'); ?></label> <input class="widefat" id="<?php echo $this->get_field_id('next_text'); ?>" name="<?php echo $this->get_field_name('next_text'); ?>" type="text" value="<?php echo $next_text; ?>" /><br /><small><?php _e( 'Optional, leave empty to use WP default.' ); ?></small>
+		</p>
+		<?php
+	}
 }// end bSuite_Widget_Pagednav
 
 // register these widgets
