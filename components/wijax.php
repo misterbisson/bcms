@@ -28,7 +28,7 @@ class bSuite_Wijax
 		{
 			wp_register_script( 'waypoints', $this->path_web . '/js/waypoints.min.js', array('jquery'), '1' );
 			wp_enqueue_script( 'waypoints' );
-			add_filter( 'print_footer_scripts', array( &$this, 'print_js' ));
+			add_filter( 'print_footer_scripts', array( &$this, 'print_js' ), 10, 1 );
 		}
 	}
 
@@ -219,7 +219,7 @@ class bSuite_Wijax
 		call_user_func_array( $widget_data['callback'], $widget_data['params'] );
 	}
 
-	function print_js(){
+	function print_js( $finish_print ){
 ?>
 <script type="text/javascript">	
 	var wijax_widget_reload = true;	
@@ -288,6 +288,7 @@ class bSuite_Wijax
 	})(jQuery);
 </script>
 <?php
+		return $finish_print;
 	}
 
 } //end bSuite_Wijax
