@@ -405,7 +405,7 @@ class bCMS_PostLoop_Scroller
 		// register scripts and styles
 		wp_register_script( 'scrollable', $this->path_web . '/js/scrollable.min.js', array('jquery'), TRUE );
 		bcms_late_enqueue_script( 'scrollable' );
-		add_filter( 'print_footer_scripts', array( $this, 'print_js' ));
+		add_filter( 'print_footer_scripts', array( $this, 'print_js' ), 10, 1 );
 
 		if( $this->settings->css )
 		{
@@ -414,7 +414,7 @@ class bCMS_PostLoop_Scroller
 		}
 	}
 
-	function print_js()
+	function print_js( $finish_print )
 	{
 ?>
 <script type="text/javascript">	
@@ -439,6 +439,7 @@ class bCMS_PostLoop_Scroller
 	})(jQuery);
 </script>
 <?php
+		return $finish_print;
 	}
 }
 

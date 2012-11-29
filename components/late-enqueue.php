@@ -26,10 +26,10 @@ function bcms_late_enqueue_style( $handle, $src = false, $deps = array(), $ver =
 	$wp_styles->all_deps( array( $handle ));
 	$wp_styles->in_footer = array_merge( (array) $wp_styles->in_footer , (array) array_diff( (array) $wp_styles->to_do , $to_do_orig ) );
 
-	add_filter( 'print_footer_scripts', 'bcms_print_late_styles' );
+	add_filter( 'print_footer_scripts', 'bcms_print_late_styles', 10, 1 );
 }
 
-function bcms_print_late_styles()
+function bcms_print_late_styles( $finish_print )
 {
 	global $wp_styles;
 
@@ -49,7 +49,7 @@ function bcms_print_late_styles()
 	}		
 
 	if( ! array( $tags ))
-		return;
+		return $finish_print;
 
 ?>
 <script type="text/javascript">	
@@ -65,5 +65,6 @@ function bcms_print_late_styles()
 	})(jQuery);
 </script>
 <?php
+	return $finish_print;
 }
 
