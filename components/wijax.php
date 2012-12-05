@@ -332,6 +332,11 @@ class Wijax_Widget extends WP_Widget
 			$wijax_varname = $mywijax->varname( $wijax_source , FALSE );
 		}
 
+		if ( $instance['class'] )
+		{
+			$before_widget = preg_replace( '/class="/', 'class="' . esc_attr( $instance['class'] ) . ' ', $before_widget );
+		}
+
 		echo $before_widget;
 
 		preg_match( '/<([\S]*)/' , $before_title , $title_element );
@@ -377,6 +382,7 @@ class Wijax_Widget extends WP_Widget
 	{
 		$instance = $old_instance;
 		$instance['title'] = strip_tags( $new_instance['title'] );
+		$instance['class'] = strip_tags( $new_instance['class'] );
 		$instance['widget'] = sanitize_title( $new_instance['widget'] );
 		$instance['widget-custom'] = sanitize_title( $new_instance['widget-custom'] );
 		$instance['base'] = sanitize_title( $new_instance['base'] );
@@ -398,10 +404,14 @@ class Wijax_Widget extends WP_Widget
 		);
 
 		$title = esc_attr( $instance['title'] );
+		$class = esc_attr( $instance['class'] );
 ?>
 		<p>
 			<label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title'); ?></label> <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo $title; ?>" /><br />
 			<small>For convenience, not shown publicly</small
+		</p>
+		<p>
+			<label for="<?php echo $this->get_field_id('class'); ?>"><?php _e('CSS Classes'); ?></label> <input class="widefat" id="<?php echo $this->get_field_id('class'); ?>" name="<?php echo $this->get_field_name('class'); ?>" type="text" value="<?php echo $class; ?>" /><br />
 		</p>
 <?php
 		echo $this->control_widgets( $instance );
