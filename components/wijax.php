@@ -227,10 +227,10 @@ class bSuite_Wijax
 		$.fn.myWijaxLoader = function()
 		{
 			var widget_source = $(this).attr('href');
-			var widget_area = $(this).parent();
-			var widget_parent = $(this).parent().parent();
-			var widget_wrapper = $(this).parents('.widget_wijax');
-			var opts = $.parseJSON( $(widget_parent).find('span.wijax-opts').text() );
+			var $widget_area = $(this).parent();
+			var $widget_wrapper = $(this).closest('.widget');
+			var $widget_parent = $widget_wrapper.parent();
+			var opts = $.parseJSON( $widget_parent.find('span.wijax-opts').text() );
 			var varname = opts.varname;
 			var title_before = unescape( opts.title_before );
 			var title_after = unescape( opts.title_after );
@@ -241,26 +241,26 @@ class bSuite_Wijax
 				cache: true,
 				success: function() {
 					// insert the fetched markup
-					$( widget_area ).replaceWith( window[varname] );
+					$( $widget_area ).replaceWith( window[varname] );
 			
 					// find the widget title, add it to the DOM, remove the temp span
-					var widget_title_el = $(widget_parent).find('span.wijax-widgettitle');
-					var widget_title = $(widget_title_el).text();
+					var $widget_title_el = $widget_parent.find('span.wijax-widgettitle');
+					var widget_title = $widget_title_el.text();
 
 					//don't set a widget title div if there is no title text
 					if(widget_title)
-						$( widget_parent ).prepend(title_before + widget_title + title_after);
+						$widget_parent.prepend(title_before + widget_title + title_after);
 					
-					$(widget_title_el).remove();
+					$widget_title_el.remove();
 			
 					// find and set the widget ID and classes
-					var widget_attr_el = $( widget_parent ).find( 'span.wijax-widgetclasses' );
-					var widget_id = $( widget_attr_el ).attr( 'id' );
-					var widget_classes = $( widget_attr_el ).attr( 'class' );
-					$( widget_wrapper ).attr( 'id' , widget_id );
-					$( widget_wrapper ).addClass( widget_classes );
-					$( widget_wrapper ).removeClass( 'widget_wijax' );
-					$(widget_attr_el).remove();
+					var $widget_attr_el = $widget_parent.find( 'span.wijax-widgetclasses' );
+					var widget_id = $widget_attr_el.attr( 'id' );
+					var widget_classes = $widget_attr_el.attr( 'class' );
+					$widget_wrapper.attr( 'id' , widget_id );
+					$widget_wrapper.addClass( widget_classes );
+					$widget_wrapper.removeClass( 'widget_wijax' );
+					$widget_attr_el.remove();
 				}
 			});
 		};
