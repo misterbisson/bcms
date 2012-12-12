@@ -279,7 +279,7 @@ class bSuite_Wijax
 		});	
 
 		// do the onscroll actions
-		$(document).one('scroll', function(){
+		$(window).one('scroll', function(){
 			// widgets
 			$('a.wijax-source.wijax-onscroll').each(function() {
 				$(this).myWijaxLoader();
