@@ -207,14 +207,16 @@ class bSuite_Wijax
 			'widget_name' => $wp_registered_widgets[ $key ]['name'],
 		);
 
-//print_r( $widget_data['callback'][0]->number );
-//print_r( $widget_data['params'][0] );
-
 		$widget_data['params'][1] = array(
 			'number' => absint( $instance_number ),
 		);
-
-		$widget_data['params'][0]['before_widget'] = sprintf($widget_data['params'][0]['before_widget'], $widget_data['widget'], ( isset( $widget_data['size'] ) ? 'grid_' . $widget_data['size'] .' ' : '' ) .$widget_data['class'] . ' ' . $widget_data['id'] . ' ' . $extra_classes);
+		
+		$arg2 = isset( $widget_data['size'] ) ? 'grid_' . $widget_data['size'] . ' ' : '';
+		$arg2 .= isset( $widget_data['class'] ) ? $widget_data['class'] . ' ' : '';
+		$arg2 .= isset( $widget_data['id'] ) ? $widget_data['id'] . ' ' : '';
+		$arg2 .= isset( $extra_classes ) ? $extra_classes : '';
+		
+		$widget_data['params'][0]['before_widget'] = sprintf( $widget_data['params'][0]['before_widget'], $widget_data['widget'], $arg2 );
 
 		call_user_func_array( $widget_data['callback'], $widget_data['params'] );
 	}

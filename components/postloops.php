@@ -818,7 +818,22 @@ class bSuite_Widget_PostLoop extends WP_Widget
 
 				// get the term taxonomy IDs for the $postloops object
 				foreach( $terms as $term )
+				{
+					if ( ! isset( $postloops->terms[ $this->number ] ) )
+					{
+						$postloops->terms[ $this->number ] = array( $term->taxonomy =>  array( $term->term_id =>0 ) );
+					}
+					elseif ( ! isset( $postloops->terms[ $this->number ][ $term->taxonomy ] ) )
+					{
+						$postloops->terms[ $this->number ][ $term->taxonomy ] = array( $term->term_id =>0 );
+					}
+					elseif ( ! isset( $postloops->terms[ $this->number ][ $term->taxonomy ][ $term->term_id ] ) )
+					{
+						$postloops->terms[ $this->number ][ $term->taxonomy ][ $term->term_id ] = 0;	
+					}
+						
 					$postloops->terms[ $this->number ][ $term->taxonomy ][ $term->term_id ]++;
+				}
 
 				// old actions
 				do_action( $action_name , 'post' , $ourposts , $postloops );
@@ -847,7 +862,8 @@ class bSuite_Widget_PostLoop extends WP_Widget
 			$extra_classes = array();
 			$extra_classes[] = str_replace( '9spot', 'nines' , sanitize_title_with_dashes( $cached->template['name'] ));
 			$extra_classes[] = 'widget-post_loop-'. sanitize_title_with_dashes( $instance['title'] );
-			$extra_classes = array_merge( $extra_classes , (array) $instance['extra_classes'] );
+			$instance['extra_classes'] = isset( $instance['extra_classes'] ) ? (array) $instance['extra_classes'] : array();
+			$extra_classes = array_merge( $extra_classes , $instance['extra_classes'] );
 
 
 			// output the widget
