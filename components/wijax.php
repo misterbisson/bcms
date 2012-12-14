@@ -230,8 +230,8 @@ class bSuite_Wijax
 		{
 			var widget_source = $(this).attr('href');
 			var $widget_area = $(this).parent();
-			var $widget_wrapper = $(this).closest('.widget');
-			var $widget_parent = $widget_wrapper.parent();
+			var $widget_wrapper = $(this).closest('.widget_wijax');
+			var $widget_parent = $(this).parent().parent();
 			var opts = $.parseJSON( $widget_parent.find('span.wijax-opts').text() );
 			var varname = opts.varname;
 			var title_before = unescape( opts.title_before );
