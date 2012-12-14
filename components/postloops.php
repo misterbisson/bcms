@@ -818,7 +818,22 @@ class bSuite_Widget_PostLoop extends WP_Widget
 
 				// get the term taxonomy IDs for the $postloops object
 				foreach( $terms as $term )
+				{
+					if ( ! isset( $postloops->terms[ $this->number ] ) )
+					{
+						$postloops->terms[ $this->number ] = array( $term->taxonomy =>  array( $term->term_id =>0 ) );
+					}
+					elseif ( ! isset( $postloops->terms[ $this->number ][ $term->taxonomy ] ) )
+					{
+						$postloops->terms[ $this->number ][ $term->taxonomy ] = array( $term->term_id =>0 );
+					}
+					elseif ( ! isset( $postloops->terms[ $this->number ][ $term->taxonomy ][ $term->term_id ] ) )
+					{
+						$postloops->terms[ $this->number ][ $term->taxonomy ][ $term->term_id ] = 0;	
+					}
+						
 					$postloops->terms[ $this->number ][ $term->taxonomy ][ $term->term_id ]++;
+				}
 
 				// old actions
 				do_action( $action_name , 'post' , $ourposts , $postloops );
@@ -847,7 +862,8 @@ class bSuite_Widget_PostLoop extends WP_Widget
 			$extra_classes = array();
 			$extra_classes[] = str_replace( '9spot', 'nines' , sanitize_title_with_dashes( $cached->template['name'] ));
 			$extra_classes[] = 'widget-post_loop-'. sanitize_title_with_dashes( $instance['title'] );
-			$extra_classes = array_merge( $extra_classes , (array) $instance['extra_classes'] );
+			$instance['extra_classes'] = isset( $instance['extra_classes'] ) ? (array) $instance['extra_classes'] : array();
+			$extra_classes = array_merge( $extra_classes , $instance['extra_classes'] );
 
 
 			// output the widget
@@ -976,13 +992,36 @@ die;
 			array( 
 				'what' => 'normal', 
 				'template' => 'a_default_full.php',
-				) 
+				'title' => '',
+				'subtitle' => '',
+				'title_show' => FALSE,
+				'query' => '',
+				'offset_start' => 0,
+				'categoriesbool' => FALSE,
+				'tagsbool' => FALSE,
+				'tags_in' => array(),
+				'tags_in_related' => 0,
+				'tags_not_in' => array(),
+				'tags_not_in_related' => 0,
+				'post__in' => array(),
+				'post__not_in' => array(),
+				'comments' => '',
+				'age_bool' => FALSE,
+				'age_num' => '',
+				'age_unit' => 0,
+				'relatedto' => '',
+				'relationship' => 0,
+				'count' => 0,
+				'order' => 0,
+				'offset_run' => 0,
+				'offset_start' => 0,
+				'thumbnail_size' => '',
+				)
 			);
 
 		$title = esc_attr( $instance['title'] );
 		$subtitle = esc_attr( $instance['subtitle'] );
-
-?>
+		?>
 		<p>
 			<label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title'); ?></label> <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo $title; ?>" />
 			<label for="<?php echo $this->get_field_id( 'title_show' ) ?>"><input id="<?php echo $this->get_field_id( 'title_show' ) ?>" name="<?php echo $this->get_field_name( 'title_show' ) ?>" type="checkbox" value="1" <?php echo ( $instance[ 'title_show' ] ? 'checked="checked"' : '' ) ?>/> Show Title?</label>
@@ -1049,7 +1088,7 @@ die;
 		
 					<?php
 					$tags_in = array();
-					foreach( (array) $instance['tags_in'] as $tag_id ){
+					foreach( $instance['tags_in'] as $tag_id ){
 						$temp = get_term( $tag_id, 'post_tag' );
 						$tags_in[] = $temp->name;
 					}
@@ -1076,7 +1115,7 @@ die;
 					<label for="<?php echo $this->get_field_id('tags_not_in'); ?>"><?php _e( 'With none of these tags' ); ?></label>
 					<?php
 					$tags_not_in = array();
-					foreach( (array) $instance['tags_not_in'] as $tag_id ){
+					foreach( $instance['tags_not_in'] as $tag_id ){
 						$temp = get_term( $tag_id, 'post_tag' );
 						$tags_not_in[] = $temp->name;
 					}
@@ -1085,8 +1124,8 @@ die;
 					<br />
 					<small><?php _e( 'Tags, separated by commas.' ); ?></small>
 
-					<br />And terms from<br /><select name="<?php echo $this->get_field_name( 'tags_not_in_related' ); ?>" id="<?php echo $this->get_field_id( 'tags_not_in_related' ); ?>" class="widefat <?php if( $instance[ 'tags_not_in_related' ] ) echo 'open-on-value'; ?>">
-						<option value="0" '. <?php selected( (int) $instance[ 'tags_not_in_related' ] , 0 ) ?> .'></option>
+					<br />And terms from<br /><select name="<?php echo $this->get_field_name( 'tags_not_in_related' ); ?>" id="<?php echo $this->get_field_id( 'tags_not_in_related' ); ?>" class="widefat <?php if ( $instance['tags_not_in_related' ] ) echo 'open-on-value'; ?>">
+						<option value="0" '. <?php selected( $instance['tags_not_in_related'], 0 ); ?> .'></option>
 <?php
 						foreach( $postloops->instances as $number => $loop ){
 							if( $number == $this->number )
@@ -1107,13 +1146,13 @@ die;
 			<label for="<?php echo $this->get_field_id('post__in'); ?>"><?php _e( 'Matching any post ID' ); ?></label>
 			<div id="<?php echo $this->get_field_id('post__in'); ?>-contents" class="contents hide-if-js">
 				<p>
-					<input type="text" value="<?php echo implode( ', ', (array) $instance['post__in'] ); ?>" name="<?php echo $this->get_field_name('post__in'); ?>" id="<?php echo $this->get_field_id('post__in'); ?>" class="widefat <?php if( count( (array) $instance['post__in'] )) echo 'open-on-value'; ?>" />
+					<input type="text" value="<?php echo implode( ', ', $instance['post__in'] ); ?>" name="<?php echo $this->get_field_name('post__in'); ?>" id="<?php echo $this->get_field_id('post__in'); ?>" class="widefat <?php if( count( $instance['post__in'] )) echo 'open-on-value'; ?>" />
 					<br />
 					<small><?php _e( 'Page IDs, separated by commas.' ); ?></small>
 				</p>
 		
 				<p>
-					<label for="<?php echo $this->get_field_id('post__not_in'); ?>"><?php _e( 'Excluding all these post IDs' ); ?></label> <input type="text" value="<?php echo implode( ', ', (array) $instance['post__not_in'] ); ?>" name="<?php echo $this->get_field_name('post__not_in'); ?>" id="<?php echo $this->get_field_id('post__not_in'); ?>" class="widefat <?php if( count( (array) $instance['post__not_in'] )) echo 'open-on-value'; ?>" />
+					<label for="<?php echo $this->get_field_id('post__not_in'); ?>"><?php _e( 'Excluding all these post IDs' ); ?></label> <input type="text" value="<?php echo implode( ', ', $instance['post__not_in'] ); ?>" name="<?php echo $this->get_field_name('post__not_in'); ?>" id="<?php echo $this->get_field_id('post__not_in'); ?>" class="widefat <?php if( count( $instance['post__not_in'] )) echo 'open-on-value'; ?>" />
 					<br />
 					<small><?php _e( 'Page IDs, separated by commas.' ); ?></small>
 				</p>
@@ -1255,11 +1294,8 @@ die;
 			</div>
 <?php
 		}
-?>
 
-
-<?php
-		if( $this->justupdated )
+		if ( isset( $this->justupdated ) && $this->justupdated )
 		{
 ?>
 <script type="text/javascript">
@@ -1308,9 +1344,11 @@ die;
 
 		// get the select list to choose categories from items shown in another instance
 		global $postloops;
+		$instance[ $whichfield .'_related' ] = isset( $instance[ $whichfield .'_related' ] ) ? $instance[ $whichfield .'_related' ] : 0;
 
-		$related_instance_select = '<option value="0" '. selected( (int) $instance[ $whichfield .'_related' ] , 0 , FALSE ) .'></option>';
-		foreach( $postloops->instances as $number => $loop ){
+		$related_instance_select = '<option value="0" '. selected( $instance[ $whichfield .'_related' ], 0, FALSE ) . '></option>';
+		foreach( $postloops->instances as $number => $loop )
+		{
 			if( $number == $this->number )
 				continue;
 
@@ -1335,6 +1373,11 @@ die;
 			if( $taxonomy == 'category' || $taxonomy == 'post_tag' )
 				continue;
 
+			$instance['tax_'. $taxonomy .'_in'] = isset( $instance['tax_'. $taxonomy .'_in'] ) ? $instance['tax_'. $taxonomy .'_in'] : array();
+			$instance['tax_'. $taxonomy .'_in_related'] = isset( $instance['tax_'. $taxonomy .'_in_related'] ) ? $instance['tax_'. $taxonomy .'_in_related'] : 0;
+			$instance['tax_'. $taxonomy .'_not_in'] = isset( $instance['tax_'. $taxonomy .'_not_in'] ) ? $instance['tax_'. $taxonomy .'_not_in'] : array();
+			$instance['tax_'. $taxonomy .'_not_in_related'] = isset( $instance['tax_'. $taxonomy .'_not_in_related'] ) ? $instance['tax_'. $taxonomy .'_not_in_related'] : 0;
+
 			$tax = get_taxonomy( $taxonomy );
 			$tax_name = $tax->label;
 ?>
@@ -1349,9 +1392,11 @@ die;
 			
 						<?php
 						$tags_in = array();
-						foreach( (array) $instance['tax_'. $taxonomy .'_in'] as $tag_id ){
+						foreach( $instance['tax_'. $taxonomy .'_in'] as $tag_id ){
 							$temp = get_term( $tag_id, $taxonomy );
-							$tags_in[] = $temp->name;
+							if ( is_object( $temp ) ) {
+								$tags_in[] = $temp->name;
+							}
 						}
 						?>
 						<input type="text" value="<?php echo implode( ', ', (array) $tags_in ); ?>" name="<?php echo $this->get_field_name('tax_'. $taxonomy .'_in'); ?>" id="<?php echo $this->get_field_id('tax_'. $taxonomy .'_in'); ?>" class="widefat <?php if( count( (array) $tags_in )) echo 'open-on-value'; ?>" />
@@ -1359,7 +1404,7 @@ die;
 						<small><?php _e( 'Terms, separated by commas.' ); ?></small>
 
 						<br />And terms from<br /><select name="<?php echo $this->get_field_name( 'tax_'. $taxonomy .'_in_related' ); ?>" id="<?php echo $this->get_field_id( 'tax_'. $taxonomy .'_in_related' ); ?>" class="widefat <?php if( $instance[ 'tax_'. $taxonomy .'_in_related' ] ) echo 'open-on-value'; ?>">
-							<option value="0" '. <?php selected( (int) $instance[ 'tax_'. $taxonomy .'_in_related' ] , 0 ) ?> .'></option>
+							<option value="0" '. <?php selected( $instance[ 'tax_'. $taxonomy .'_in_related' ] , 0 ) ?> .'></option>
 <?php
 							foreach( $postloops->instances as $number => $loop ){
 								if( $number == $this->number )
@@ -1378,7 +1423,9 @@ die;
 						$tags_not_in = array();
 						foreach( (array) $instance['tax_'. $taxonomy .'_not_in'] as $tag_id ){
 							$temp = get_term( $tag_id, $taxonomy );
-							$tags_not_in[] = $temp->name;
+							if ( is_object( $temp ) ) {
+								$tags_not_in[] = $temp->name;
+							}
 						}
 						?>
 						<input type="text" value="<?php echo implode( ', ', (array) $tags_not_in ); ?>" name="<?php echo $this->get_field_name('tax_'. $taxonomy .'_not_in'); ?>" id="<?php echo $this->get_field_id('tax_'. $taxonomy .'_not_in'); ?>" class="widefat <?php if( count( (array) $tags_not_in )) echo 'open-on-value'; ?>" />

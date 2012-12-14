@@ -207,14 +207,16 @@ class bSuite_Wijax
 			'widget_name' => $wp_registered_widgets[ $key ]['name'],
 		);
 
-//print_r( $widget_data['callback'][0]->number );
-//print_r( $widget_data['params'][0] );
-
 		$widget_data['params'][1] = array(
 			'number' => absint( $instance_number ),
 		);
-
-		$widget_data['params'][0]['before_widget'] = sprintf($widget_data['params'][0]['before_widget'], $widget_data['widget'], ( isset( $widget_data['size'] ) ? 'grid_' . $widget_data['size'] .' ' : '' ) .$widget_data['class'] . ' ' . $widget_data['id'] . ' ' . $extra_classes);
+		
+		$arg2 = isset( $widget_data['size'] ) ? 'grid_' . $widget_data['size'] . ' ' : '';
+		$arg2 .= isset( $widget_data['class'] ) ? $widget_data['class'] . ' ' : '';
+		$arg2 .= isset( $widget_data['id'] ) ? $widget_data['id'] . ' ' : '';
+		$arg2 .= isset( $extra_classes ) ? $extra_classes : '';
+		
+		$widget_data['params'][0]['before_widget'] = sprintf( $widget_data['params'][0]['before_widget'], $widget_data['widget'], $arg2 );
 
 		call_user_func_array( $widget_data['callback'], $widget_data['params'] );
 	}
@@ -415,11 +417,11 @@ class Wijax_Widget extends WP_Widget
 		// get the available widgets
 		$sidebars_widgets = wp_get_sidebars_widgets();
 		$list = '';
+		$instance[ $whichfield ] = isset( $instance[ $whichfield ] ) ? $instance[ $whichfield ] : '';
+		$instance[ $whichfield . '-custom' ] = isset( $instance[ $whichfield . '-custom' ] ) ? $instance[ $whichfield . '-custom' ] : '';
+
 		foreach( (array) $sidebars_widgets['wijax-area'] as $item )
 		{
-			if( $number == $this->number )
-				continue;
-
 			$list .= '<option value="'. $item .'" '. selected( $instance[ $whichfield ] , $item , FALSE ) .'>'. $item .'</option>';
 		}
 		$list .= '<option value="custom" '. selected( $instance[ $whichfield ] , 'custom' , FALSE ) .'>Custom widget</option>';
@@ -436,6 +438,10 @@ class Wijax_Widget extends WP_Widget
 			'remote' => 'Remote base URL',
 		));
 
+		$instance[ $whichfield ] = isset( $instance[ $whichfield ] ) ? $instance[ $whichfield ] : '';
+		$instance[ $whichfield . '-remote' ] = isset( $instance[ $whichfield . '-remote' ] ) ? $instance[ $whichfield . '-remote' ] : '';
+
+		$list = '';
 		foreach( (array) $bases as $k => $v )
 			$list .= '<option value="'. $k .'" '. selected( $instance[ $whichfield ] , $k , FALSE ) .'>'. $v .'</option>';
 
@@ -450,6 +456,9 @@ class Wijax_Widget extends WP_Widget
 			'onscroll' 	=> 'Wait for user to scroll page to load content',
 		));
 
+		$instance[ $whichfield ] = isset( $instance[ $whichfield ] ) ? $instance[ $whichfield ] : '';
+
+		$list = '';
 		foreach( (array) $loadtimes as $k => $v )
 			$list .= '<option value="'. $k .'" '. selected( $instance[ $whichfield ] , $k , FALSE ) .'>'. $v .'</option>';
 
