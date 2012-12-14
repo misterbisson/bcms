@@ -1424,7 +1424,7 @@ die;
 						foreach( (array) $instance['tax_'. $taxonomy .'_not_in'] as $tag_id ){
 							$temp = get_term( $tag_id, $taxonomy );
 							if ( is_object( $temp ) ) {
-								$tags_in[] = $temp->name;
+								$tags_not_in[] = $temp->name;
 							}
 						}
 						?>

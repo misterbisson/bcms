@@ -419,10 +419,10 @@ class Wijax_Widget extends WP_Widget
 		$list = '';
 		$instance[ $whichfield ] = isset( $instance[ $whichfield ] ) ? $instance[ $whichfield ] : '';
 		$instance[ $whichfield . '-custom' ] = isset( $instance[ $whichfield . '-custom' ] ) ? $instance[ $whichfield . '-custom' ] : '';
-		
+
 		foreach( (array) $sidebars_widgets['wijax-area'] as $item )
 		{
-			$list = '<option value="'. $item .'" '. selected( $instance[ $whichfield ] , $item , FALSE ) .'>'. $item .'</option>';
+			$list .= '<option value="'. $item .'" '. selected( $instance[ $whichfield ] , $item , FALSE ) .'>'. $item .'</option>';
 		}
 		$list .= '<option value="custom" '. selected( $instance[ $whichfield ] , 'custom' , FALSE ) .'>Custom widget</option>';
 
@@ -441,8 +441,9 @@ class Wijax_Widget extends WP_Widget
 		$instance[ $whichfield ] = isset( $instance[ $whichfield ] ) ? $instance[ $whichfield ] : '';
 		$instance[ $whichfield . '-remote' ] = isset( $instance[ $whichfield . '-remote' ] ) ? $instance[ $whichfield . '-remote' ] : '';
 
+		$list = '';
 		foreach( (array) $bases as $k => $v )
-			$list = '<option value="'. $k .'" '. selected( $instance[ $whichfield ] , $k , FALSE ) .'>'. $v .'</option>';
+			$list .= '<option value="'. $k .'" '. selected( $instance[ $whichfield ] , $k , FALSE ) .'>'. $v .'</option>';
 
 		return '<p><label for="'. $this->get_field_id( $whichfield ) .'">Base URL</label><select name="'. $this->get_field_name( $whichfield ) .'" id="'. $this->get_field_id( $whichfield ) .'" class="widefat">'. $list . '</select><br /><small>The base URL affects widget content and caching</small></p><p><label for="'. $this->get_field_id( $whichfield .'-remote' ) .'">Remote Base URL</label><input name="'. $this->get_field_name( $whichfield .'-remote' ) .'" id="'. $this->get_field_id( $whichfield .'-remote' ) .'" class="widefat" type="text" value="'. esc_url( $instance[ $whichfield .'-remote' ] ).'"></p>';
 	}
@@ -457,8 +458,9 @@ class Wijax_Widget extends WP_Widget
 
 		$instance[ $whichfield ] = isset( $instance[ $whichfield ] ) ? $instance[ $whichfield ] : '';
 
+		$list = '';
 		foreach( (array) $loadtimes as $k => $v )
-			$list = '<option value="'. $k .'" '. selected( $instance[ $whichfield ] , $k , FALSE ) .'>'. $v .'</option>';
+			$list .= '<option value="'. $k .'" '. selected( $instance[ $whichfield ] , $k , FALSE ) .'>'. $v .'</option>';
 
 		return '<p><label for="'. $this->get_field_id( $whichfield ) .'">Loadtime</label><select name="'. $this->get_field_name( $whichfield ) .'" id="'. $this->get_field_id( $whichfield ) .'" class="widefat">'. $list . '</select><br /><small>Consider waiting to load content below the fold</small></p>';
 	}
