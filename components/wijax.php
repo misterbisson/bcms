@@ -229,14 +229,13 @@ class bSuite_Wijax
 		$.fn.myWijaxLoader = function()
 		{
 			var widget_source = $(this).attr('href');
-			var $widget_area = $(this).parent();
-			var $widget_wrapper = $(this).closest('.widget_wijax');
-			var $widget_parent = $(this).parent().parent();
+			var $widget_area = $(this).closest('.wijax-loading');
+			var $widget_parent = $widget_area.parent();
 			var opts = $.parseJSON( $widget_parent.find('span.wijax-opts').text() );
 			var varname = opts.varname;
 			var title_before = unescape( opts.title_before );
 			var title_after = unescape( opts.title_after );
-			
+
 			$.ajax({ 
 				url: widget_source, 
 				dataType: 'script',
@@ -259,9 +258,9 @@ class bSuite_Wijax
 					var $widget_attr_el = $widget_parent.find( 'span.wijax-widgetclasses' );
 					var widget_id = $widget_attr_el.attr( 'id' );
 					var widget_classes = $widget_attr_el.attr( 'class' );
-					$widget_wrapper.attr( 'id' , widget_id );
-					$widget_wrapper.addClass( widget_classes );
-					$widget_wrapper.removeClass( 'widget_wijax' );
+					$widget_parent.attr( 'id' , widget_id );
+					$widget_parent.addClass( widget_classes );
+					$widget_parent.removeClass( 'widget_wijax' );
 					$widget_attr_el.remove();
 				}
 			});
