@@ -474,7 +474,7 @@ class Wijax_Encode
 		if ( function_exists( 'status_header' ) )
 			status_header( 200 );
 		header('X-Robots-Tag: noindex' , TRUE );
-		header('Content-type: text/javascript');
+		header('Content-Type: text/javascript');
 		echo self::encode( $content , $varname );
 	}//end out
 
