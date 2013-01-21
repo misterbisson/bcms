@@ -491,10 +491,9 @@ class bSuite_Widget_PostLoop extends WP_Widget
 
 			$ourposts = &$wp_query;
 
-		// predefined queries
+		}// end if
 		else if( preg_match( '/^predefined_/' , $instance['query'] ))
 		{
-
 			// get the predefined query object
 			$ourposts = apply_filters( 'postloop_query_'. preg_replace( '/^predefined_/' , '' , $instance['query'] ) , FALSE );
 
