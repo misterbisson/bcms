@@ -496,7 +496,7 @@ class bSuite_Widget_PostLoop extends WP_Widget
 		{
 
 			// get the predefined query object
-			$ourposts = apply_filters( 'ploop_query_'. preg_replace( '/^predefined_/' , '' , $instance['query'] ) , FALSE );
+			$ourposts = apply_filters( 'postloop_query_'. preg_replace( '/^predefined_/' , '' , $instance['query'] ) , FALSE );
 
 			// check that we got something
 			if( ! $ourposts || ! is_object( $ourposts ))
@@ -905,7 +905,7 @@ class bSuite_Widget_PostLoop extends WP_Widget
 		$instance['title_show'] = absint( $new_instance['title_show'] );
 
 		$allowed_queries = array( 'normal' , 'custom' );
-		$predefined_queries = apply_filters( 'ploop_predefined_queries' , array());
+		$predefined_queries = apply_filters( 'postloop_predefined_queries' , array());
 		foreach( $predefined_queries as $k => $v )
 		{
 			$k = preg_replace( '/[^a-zA-Z0-9_-]*/' , '' , $k );
@@ -1060,7 +1060,7 @@ die;
 						<option value="normal" <?php selected( $instance['query'], 'normal' ); ?>><?php _e('The default content'); ?></option>
 						<option value="custom" <?php selected( $instance['query'], 'custom' ); ?>><?php _e('Custom content'); ?></option>
 						<?php
-							$predefined_queries = apply_filters( 'ploop_predefined_queries' , array());
+							$predefined_queries = apply_filters( 'postloop_predefined_queries' , array());
 							foreach( $predefined_queries as $k => $v )
 							{
 								//sanitize the value name
