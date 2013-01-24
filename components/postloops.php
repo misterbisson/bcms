@@ -491,6 +491,18 @@ class bSuite_Widget_PostLoop extends WP_Widget
 
 			$ourposts = &$wp_query;
 
+		}// end if
+		else if( preg_match( '/^predefined_/' , $instance['query'] ))
+		{
+			// get the predefined query object
+			$ourposts = apply_filters( 'postloop_query_'. preg_replace( '/^predefined_/' , '' , $instance['query'] ) , FALSE );
+
+			// check that we got something
+			if( ! $ourposts || ! is_object( $ourposts ))
+			{
+				echo '<!-- error: the predefined query is invalid -->';
+				return FALSE;
+			}
 		}
 		else
 		{
@@ -891,7 +903,14 @@ class bSuite_Widget_PostLoop extends WP_Widget
 		$instance['subtitle'] = wp_filter_nohtml_kses( $new_instance['subtitle'] );
 		$instance['title_show'] = absint( $new_instance['title_show'] );
 
-		$instance['query'] = in_array( $new_instance['query'] , array( 'normal' , 'custom' )) ? $new_instance['query'] : 'normal';
+		$allowed_queries = array( 'normal' , 'custom' );
+		$predefined_queries = apply_filters( 'postloop_predefined_queries' , array());
+		foreach( $predefined_queries as $k => $v )
+		{
+			$k = preg_replace( '/[^a-zA-Z0-9_-]*/' , '' , $k );
+			$allowed_queries[] = 'predefined_'. $k;
+		}
+		$instance['query'] = in_array( $new_instance['query'] , $allowed_queries ) ? $new_instance['query'] : 'normal';
 
 		$instance['what'] = (array) array_intersect( (array) $this->get_post_types() , array_keys( $new_instance['what'] ));
 
@@ -1039,6 +1058,17 @@ die;
 					<select name="<?php echo $this->get_field_name('query'); ?>" id="<?php echo $this->get_field_id('query'); ?>" class="widefat postloop querytype_selector">
 						<option value="normal" <?php selected( $instance['query'], 'normal' ); ?>><?php _e('The default content'); ?></option>
 						<option value="custom" <?php selected( $instance['query'], 'custom' ); ?>><?php _e('Custom content'); ?></option>
+						<?php
+							$predefined_queries = apply_filters( 'postloop_predefined_queries' , array());
+							foreach( $predefined_queries as $k => $v )
+							{
+								//sanitize the value name
+								$k = preg_replace( '/[^a-zA-Z0-9_-]*/' , '' , $k );
+
+								// output the option line
+								?><option value="predefined_<?php echo $k; ?>" <?php selected( $instance['query'], 'predefined_'. $k ); ?>><?php esc_attr_e( $v ); ?></option><?php
+							}
+						?>
 					</select>
 				</p>
 			</div>
