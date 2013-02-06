@@ -5,7 +5,8 @@
  */
 class bSuite_Wijax
 {
-	var $ep_name = 'wijax';
+	var $ep_name_ajax = 'wijax';
+	var $ep_name_iframe = 'wiframe';
 	var $salt = '';
 	var $allow_plaintext = TRUE;
 
@@ -21,20 +22,22 @@ class bSuite_Wijax
 	function init()
 	{
 
-		add_rewrite_endpoint( $this->ep_name , EP_ALL );
-		add_filter( 'request' , array( &$this, 'request' ));
+		add_rewrite_endpoint( $this->ep_name_ajax , EP_ALL );
+		add_rewrite_endpoint( $this->ep_name_iframe , EP_ALL );
+		add_filter( 'request' , array( $this, 'request' ));
 
 		if( ! is_admin())
 		{
 			wp_register_script( 'waypoints', $this->path_web . '/js/waypoints.min.js', array('jquery'), '1' );
 			wp_enqueue_script( 'waypoints' );
-			add_filter( 'print_footer_scripts', array( &$this, 'print_js' ), 10, 1 );
+			add_filter( 'print_footer_scripts', array( $this, 'print_js' ), 10, 1 );
 		}
 	}
 
 	function add_query_var( $qvars )
 	{
-		$qvars[] = $this->ep_name;
+		$qvars[] = $this->ep_name_ajax;
+		$qvars[] = $this->ep_name_iframe;
 		return $qvars;
 	}
 
@@ -87,12 +90,28 @@ class bSuite_Wijax
 
 	public function request( $request )
 	{
-		if( isset( $request[ $this->ep_name ] ))
+		// is this a Wijax request?
+		if( isset( $request[ $this->ep_name_ajax ] ))
 		{
-			add_filter( 'template_redirect' , array( &$this, 'redirect' ), 0 );
-			define( 'IS_WIJAX' , TRUE );
-			do_action( 'do_wijax' );
+			$this->method = $this->ep_name_ajax;
 		}
+		
+		// or is this a Wiframe request?
+		elseif( isset( $request[ $this->ep_name_iframe ] ))
+		{
+			$this->method = $this->ep_name_iframe;
+		}
+
+		// or should I just give up?
+		else
+		{
+			return $request;
+		}
+
+		// this is a Wijax or Wiframe request, let's handle it
+		add_filter( 'template_redirect' , array( $this, 'redirect' ), 0 );
+		define( 'IS_WIJAX' , TRUE );
+		do_action( 'do_' . $this->method );
 
 		return $request;
 	}
@@ -101,7 +120,7 @@ class bSuite_Wijax
 	{
 		global $postloops, $wp_registered_widgets;
 
-		$requested_widgets = array_filter( array_map( 'trim' , (array) explode( ',' , get_query_var( $this->ep_name ) )));
+		$requested_widgets = array_filter( array_map( 'trim' , (array) explode( ',' , get_query_var( $this->method ) )));
 
 		if( 1 > count( $requested_widgets ))
 			die;
@@ -131,10 +150,20 @@ class bSuite_Wijax
 			// try the requested key against the md5 list
 			if( ! isset( $actions[ $key ] ))
 			{
-				// allow plaintext queries, md5 the key and try that against the list
-				$key = $this->encoded_name( $key );
-				if(( ! $this->allow_plaintext ) || ( ! isset( $actions[ $key ] )))
+				// allow plaintext queries when handling wiframe queries or if allowed in the config
+				if( $this->method == $this->ep_name_iframe || $this->allow_plaintext )
+				{
+					// md5 the key and try that against the list
+					$key = $this->encoded_name( $key );
+					if( ! isset( $actions[ $key ] ))
+					{
+						die;					
+					}
+				}
+				else
+				{
 					die;
+				}
 			}
 
 			// start output buffering
@@ -144,8 +173,16 @@ class bSuite_Wijax
 			$do = 'do_'. $actions[ $key ]->type;
 			$this->$do( $actions[ $key ]->key );
 
-			// close the output buffer and send it to the client as a JS var
-			Wijax_Encode::out( ob_get_clean() , $this->varname() );
+			// select a handler and send the contents of the output buffer to the client
+			switch( $this->method )
+			{
+				case $this->ep_name_ajax:
+					Wijax_Encode::out( ob_get_clean() , $this->varname() );
+					break;
+//				case $this->ep_name_iframe:
+//					Wiframe_Encode::out( ob_get_clean() );
+//					break;
+			}
 
 			die; // only doing one widget now
 		}//end foreach
