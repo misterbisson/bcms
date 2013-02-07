@@ -99,6 +99,7 @@ class bSuite_Wijax
 		// or is this a Wiframe request?
 		elseif( isset( $request[ $this->ep_name_iframe ] ))
 		{
+			include_once dirname( __FILE__ ) . '/class-bcms-wiframe-encode.php';
 			$this->method = $this->ep_name_iframe;
 		}
 
@@ -166,22 +167,23 @@ class bSuite_Wijax
 				}
 			}
 
-			// start output buffering
-			ob_start();
-
 			// identify and execute the matching action
 			$do = 'do_'. $actions[ $key ]->type;
-			$this->$do( $actions[ $key ]->key );
 
 			// select a handler and send the contents of the output buffer to the client
 			switch( $this->method )
 			{
 				case $this->ep_name_ajax:
+					// start output buffering
+					ob_start();
+
+					$this->$do( $actions[ $key ]->key );
+
 					Wijax_Encode::out( ob_get_clean() , $this->varname() );
 					break;
-//				case $this->ep_name_iframe:
-//					Wiframe_Encode::out( ob_get_clean() );
-//					break;
+				case $this->ep_name_iframe:
+					BCMS_Wiframe_Encode::out( array( $this, $do ), $actions[ $key ]->key );
+					break;
 			}
 
 			die; // only doing one widget now
