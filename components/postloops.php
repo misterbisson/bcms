@@ -6,7 +6,7 @@
 class bSuite_PostLoops
 {
 	//cache ttl
-	var $ttl = 14401; // a prime number slightly longer than four hours
+	var $ttl = 293; // a prime number slightly less than five minutes
 
 	// instances
 	var $instances;
