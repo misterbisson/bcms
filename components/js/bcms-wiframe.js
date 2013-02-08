@@ -34,7 +34,7 @@ bcms.wiframe = function( args ) {
  */
 bcms.libraries_loaded = function() {
 	if ( typeof jQuery === "undefined" || typeof jQuery.receiveMessage === "undefined" ) {
-		setTimeout( bcms.load_libraries, 10 );
+		setTimeout( bcms.libraries_loaded, 10 );
 		return;
 	}//end if
 
