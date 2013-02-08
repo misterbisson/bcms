@@ -7,6 +7,7 @@ class bSuite_Wijax
 {
 	var $ep_name_ajax = 'wijax';
 	var $ep_name_iframe = 'wiframe';
+	var $ep_name_iframe_source = 'bcms-wiframe';
 	var $salt = '';
 	var $allow_plaintext = TRUE;
 
@@ -24,6 +25,8 @@ class bSuite_Wijax
 
 		add_rewrite_endpoint( $this->ep_name_ajax , EP_ALL );
 		add_rewrite_endpoint( $this->ep_name_iframe , EP_ALL );
+		add_rewrite_endpoint( $this->ep_name_iframe_source , EP_ALL );
+
 		add_filter( 'request' , array( $this, 'request' ));
 
 		if( ! is_admin())
@@ -101,6 +104,16 @@ class bSuite_Wijax
 		{
 			include_once dirname( __FILE__ ) . '/class-bcms-wiframe-encode.php';
 			$this->method = $this->ep_name_iframe;
+		}
+		
+		// or is this a Wiframe source request?
+		elseif( isset( $request[ $this->ep_name_iframe_source ] ))
+		{
+			$js = file_get_contents( dirname( __FILE__ ) . '/js/bcms-wiframe.js' );
+			
+			header('Content-Type: application/javascript');
+			echo $js;
+			die;
 		}
 
 		// or should I just give up?

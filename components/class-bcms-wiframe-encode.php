@@ -2,6 +2,22 @@
 
 class BCMS_Wiframe_Encode
 {
+	/**
+	 * Usage:
+	<script type="text/javascript">
+		var bcms_wiframe = {
+			url           : 'URL_OF_IFRAME_SOURCE',
+			any_variables : 'asdf',
+			you_want      : 'bacon',
+			to_pass       : 'awesome',
+		};
+
+		(function() {
+			var src = ('https:' == document.location.protocol ? 'https://' : 'http://') + 'URL_TO_JS/bcms-wiframe/';
+			document.write( unescape( '%3Cscript src="' + src + '"%3E%3C/script%3E' ) );
+		})();
+	</script>
+	 */
 	public static function out( $function, $key )
 	{
 		if ( function_exists( 'status_header' ) )
@@ -10,6 +26,22 @@ class BCMS_Wiframe_Encode
 		}//end if
 
 		header( 'X-Robots-Tag: noindex', TRUE );
+
+		bcms_late_enqueue_script(
+			'jquery-postmessage',
+			plugins_url( 'components/js/jquery.ba-postmessage.min.js', __DIR__ ),
+			array( 'jquery' ),
+			'0.5',
+			TRUE
+		);
+
+		bcms_late_enqueue_script(
+			'bcms-wiframe-notify',
+			plugins_url( 'components/js/bcms-wiframe-notify.js', __DIR__ ),
+			array( 'go-subscriptions' ),
+			1,
+			TRUE
+		);
 
 		?><!doctype html>
 		<html>
