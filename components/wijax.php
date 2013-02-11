@@ -7,6 +7,7 @@ class bSuite_Wijax
 {
 	var $ep_name_ajax = 'wijax';
 	var $ep_name_iframe = 'wiframe';
+	var $ep_name_iframe_source = 'bcms-wiframe';
 	var $salt = '';
 	var $allow_plaintext = TRUE;
 
@@ -24,6 +25,8 @@ class bSuite_Wijax
 
 		add_rewrite_endpoint( $this->ep_name_ajax , EP_ALL );
 		add_rewrite_endpoint( $this->ep_name_iframe , EP_ALL );
+		add_rewrite_endpoint( $this->ep_name_iframe_source , EP_ALL );
+
 		add_filter( 'request' , array( $this, 'request' ));
 
 		if( ! is_admin())
@@ -99,7 +102,18 @@ class bSuite_Wijax
 		// or is this a Wiframe request?
 		elseif( isset( $request[ $this->ep_name_iframe ] ))
 		{
+			include_once dirname( __FILE__ ) . '/class-bcms-wiframe-encode.php';
 			$this->method = $this->ep_name_iframe;
+		}
+		
+		// or is this a Wiframe source request?
+		elseif( isset( $request[ $this->ep_name_iframe_source ] ))
+		{
+			$js = file_get_contents( dirname( __FILE__ ) . '/js/bcms-wiframe.js' );
+			
+			header('Content-Type: application/javascript');
+			echo $js;
+			die;
 		}
 
 		// or should I just give up?
@@ -166,22 +180,23 @@ class bSuite_Wijax
 				}
 			}
 
-			// start output buffering
-			ob_start();
-
 			// identify and execute the matching action
 			$do = 'do_'. $actions[ $key ]->type;
-			$this->$do( $actions[ $key ]->key );
 
 			// select a handler and send the contents of the output buffer to the client
 			switch( $this->method )
 			{
 				case $this->ep_name_ajax:
+					// start output buffering
+					ob_start();
+
+					$this->$do( $actions[ $key ]->key );
+
 					Wijax_Encode::out( ob_get_clean() , $this->varname() );
 					break;
-//				case $this->ep_name_iframe:
-//					Wiframe_Encode::out( ob_get_clean() );
-//					break;
+				case $this->ep_name_iframe:
+					BCMS_Wiframe_Encode::out( array( $this, $do ), $actions[ $key ]->key );
+					break;
 			}
 
 			die; // only doing one widget now
