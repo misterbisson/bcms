@@ -33,6 +33,8 @@ class bSuite_List_Children
 			'date_format' => get_option('date_format'),
 			'exclude'     => '',
 			'authors'     => '',
+			'post_type'   => 'page',
+			'post_status' => 'publish'
 		), $arg );
 	
 		$prefix = $suffix = '';
