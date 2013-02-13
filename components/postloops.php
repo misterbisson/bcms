@@ -278,6 +278,7 @@ class bSuite_PostLoops
 	function do_action( $type , $name , $event , $query_object , $widget )
 	{
 
+		$this->current = new stdClass;
 		$this->current->widget = $widget;
 		$this->current->query = $query_object;
 
