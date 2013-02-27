@@ -7,6 +7,7 @@ class bSuite_Innerindex
 		add_filter( 'content_save_pre' , array( $this, 'nametags' ) , 3 );
 //		add_filter( 'content_save_pre' , array( $this, 'addsections' ) , 7 );
 		add_filter( 'save_post' , array( $this , 'delete_cache' ));
+		add_filter( 'go_theme_page_summary' , array( $this , 'go_theme_page_summary' ));
 		$this->allowedposttags(); // allow IDs on H1-H6 tags
 	}
 
@@ -152,5 +153,23 @@ class bSuite_Innerindex
 
 		return;
 	}
+	
+	function go_theme_page_summary()
+	{
+		$this->shortcode( array( 'title' => '', 'div_class' => '' ) ); 
+	}
 }
-$bbuite_innerindex = new bSuite_Innerindex;
+
+function bsuite_innerindex()
+{
+	global $bsuite_innerindex;
+
+	if ( ! is_object( $bsuite_innerindex ) )
+	{
+		$bsuite_innerindex = new bSuite_Innerindex();
+	}
+
+	return $bsuite_innerindex;
+}
+
+bsuite_innerindex();
