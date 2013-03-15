@@ -1,6 +1,6 @@
 <?php
 
-new bCMS_PostLoop_Scroller( array(
+bcms_get_new_postloop_scroller( array(
 	// configuration
 	'parent_selector' => '#'. $this->current->widget->id .' .scrollable',
 	'child_selector' => '#'. $this->current->widget->id .' .items div',

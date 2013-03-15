@@ -1,461 +1,15 @@
 <?php
-/**
- * PostLoops class
- *
- */
-class bSuite_PostLoops
-{
-	//cache ttl
-	var $ttl = 293; // a prime number slightly less than five minutes
-
-	// instances
-	var $instances;
-
-	// posts matched by various instances of the widget
-	var $posts; // $posts[ $loop_id ] = $post_id
-
-	// terms from the posts in each instance
-	var $terms; // $tags[ $loop_id ][ $taxonomy ][ $term_id ] = $count
-
-	var $thumbnail_size = 'nines-thumbnail-small'; // the default thumbnail size
-
-	function bSuite_PostLoops()
-	{
-		$this->path_web = plugins_url( plugin_basename( dirname( __FILE__ )));
-
-		add_action( 'init', array( $this, 'init' ));
-
-		add_action( 'template_redirect' , array( $this, 'get_default_posts' ) , 0 );
-	}
-
-	function init()
-	{
-		if( function_exists( 'add_image_size' ))
-		{
-			add_image_size( 'nines-thumbnail-small' , 100 , 100 , TRUE );
-			add_image_size( 'nines-thumbnail-wide' , 200 , 150 , TRUE );
-		}
-
-		$this->get_instances();
-
-		add_action( 'admin_init', array(&$this, 'admin_init' ));
-//		add_filter( 'posts_request' , array( &$this , 'posts_request' ));
-	}
-
-	function admin_init()
-	{
-		wp_register_script( 'postloop-editwidgets', $this->path_web . '/js/edit_widgets.js', array('jquery'), '2' );
-		wp_enqueue_script( 'postloop-editwidgets' );
-
-		add_action( 'admin_footer', array( &$this, 'footer_activatejs' ));
-	}
-
-	public function footer_activatejs(){
-?>
-		<script type="text/javascript">
-			postloops_widgeteditor();
-		</script>
-<?php
-	}
-
-	function get_default_posts()
-	{
-		global $wp_query;
-
-		// test the cache first
-		// this is about 100 to 1000 times faster than the nested loops below
-		$cachekey = md5( serialize( $wp_query->posts ));
-		if( $cached = wp_cache_get( $cachekey , 'bcmsdefaultposts' ))
-		{
-			$this->posts[-1] = $cached['posts'];
-			$this->terms[-1] = $cached['terms'];
-
-			return;
-		}
-
-		// process each post to capture post IDs and terms
-		foreach( $wp_query->posts as $post )
-		{
-			// get the matching post IDs for the $postloops object
-			$this->posts[-1][] = $post->ID;
-			
-			// get the matching terms by taxonomy
-			$terms = wp_get_object_terms( $post->ID, (array) get_object_taxonomies( $post->post_type ) );
-
-			// get the term taxonomy IDs for the $postloops object
-			foreach( $terms as $term )
-			{
-				if( ! isset( $this->terms[-1][ $term->taxonomy ] ) ) // initialize
-					$this->terms[-1][ $term->taxonomy ] = array();
-
-				if( ! isset( $this->terms[-1][ $term->taxonomy ][ $term->term_id ] )) // initialize
-					$this->terms[-1][ $term->taxonomy ][ $term->term_id ] = 0;
-
-				$this->terms[-1][ $term->taxonomy ][ $term->term_id ]++; // increment
-			}
-		}
-
-		// set the cache if we get here
-		wp_cache_set( 
-			$cachekey , 
-			array( 
-				'posts' => $this->posts[-1] , 
-				'terms' => $this->terms[-1] , 
-				'time' => time()
-			) , 
-			'bcmsdefaultposts' , 
-			$this->ttl 
-		);
-	}
-
-	function get_instances()
-	{
-		$options = get_option( 'widget_postloop' );
-
-		// add an entry for the default conent
-		$options[-1] = array( 
-			'title' => 'The default content',
-		);
-
-		foreach( $options as $number => $option )
-		{
-			if( is_integer( $number ))
-			{
-				$option['title'] = empty( $option['title'] ) ? 'Instance #'. $number : wp_filter_nohtml_kses( $option['title'] );
-				$this->instances[ $number ] = $option;
-			}
-		}
-
-		return $this->instances;
-	}
-
-	function get_instances_response()
-	{
-		$options = get_option( 'widget_responseloop' );
-
-		// add an entry for the default conent
-		$options[-1] = array( 
-			'title' => 'The default content',
-		);
-
-		foreach( $options as $number => $option )
-		{
-			if( is_integer( $number ))
-			{
-				$option['title'] = empty( $option['title'] ) ? 'Instance #'. $number : wp_filter_nohtml_kses( $option['title'] );
-				$this->instances_response[ md5( (string) $number . $option['template'] . $option['email'] ) ] = $option;
-			}
-		}
-
-		return $this->instances_response;
-	}
-
-	function get_templates_readdir( $template_base )
-	{
-		$page_templates = array();
-		$template_dir = @ dir( $template_base );
-		if ( $template_dir ) 
-		{
-			while ( ( $file = $template_dir->read() ) !== false ) 
-			{
-				if ( preg_match('|^\.+$|', $file ))
-					continue;
-				if ( preg_match('|\.php$|', $file )) 
-				{
-					$template_data = implode( '', file( $template_base . $file ));
-	
-					$name = '';
-					if ( preg_match( '|Template Name:(.*)$|mi', $template_data, $name ))
-						$name = _cleanup_header_comment( $name[1] );
-
-					$wrapper = FALSE;
-					if ( preg_match( '|Wrapper:(.*)$|mi', $template_data )) // any value here will set it true
-						$wrapper = TRUE;
-
-					if ( !empty( $name ) ) 
-					{
-						$file = basename( $file );
-						$page_templates[ $file ]['name'] = trim( $name );
-						$page_templates[ $file ]['file'] = basename( $file );
-						$page_templates[ $file ]['fullpath'] = $template_base . $file;
-						$page_templates[ $file ]['wrapper'] = $wrapper;
-					}
-				}
-			}
-			@$template_dir->close();
-		}
-
-		return $page_templates;
-	}
-	
-	function get_templates( $type = 'post' )
-	{
-		$type = sanitize_file_name( $type );
-		$type_var = "templates_$type";
-
-		if( isset( $this->$type_var ))
-			return $this->$type_var;
-
-		$this->$type_var = array_merge
-		( 
-			(array) $this->get_templates_readdir( dirname( dirname( __FILE__ )) .'/templates-'. $type .'/' ),
-			(array) $this->get_templates_readdir( TEMPLATEPATH . '/templates-'. $type .'/' ), 
-			(array) $this->get_templates_readdir( STYLESHEETPATH . '/templates-'. $type .'/' ) 
-		);
-
-		return $this->$type_var;
-	}
-
-
-	function _missing_template()
-	{
-?><!-- ERROR: the required template file is missing or unreadable. A default template is being used instead. -->
-<div <?php post_class() ?> id="post-<?php the_ID(); ?>">
-	<h2><a href="<?php the_permalink() ?>" rel="bookmark" title="Permanent Link to <?php the_title_attribute(); ?>"><?php the_title(); ?></a></h2>
-	<small><?php the_time('F jS, Y') ?> <!-- by <?php the_author() ?> --></small>
-
-	<div class="entry">
-		<?php the_content('Read the rest of this entry &raquo;'); ?>
-	</div>
-
-	<p class="postmetadata"><?php the_tags('Tags: ', ', ', '<br />'); ?> Posted in <?php the_category(', ') ?> | <?php edit_post_link('Edit', '', ' | '); ?>  <?php comments_popup_link('No Comments &#187;', '1 Comment &#187;', '% Comments &#187;'); ?></p>
-</div>
-<?php
-	}
-
-	function do_template( $name , $event , $query_object = FALSE , $postloop_object = FALSE , $widget = FALSE )
-	{
-
-		// get the post templates
-		$templates = $this->get_templates( 'post' );
-
-		// check that we have a template by this name
-		if( ! isset( $templates[ $name ] ))
-		{
-			$this->_missing_template();
-			return;
-		}
-
-		// do it
-		switch( $event )
-		{
-			case 'before':
-				if( isset( $templates[ $name ]['wrapper'] ) && ( ! @include preg_replace( '/\.php$/', '_before.php', $templates[ $name ]['fullpath'] )))
-					echo '<!-- ERROR: the required template wrapper file is missing or unreadable. -->';
-
-				break;
-
-			case 'after':
-				if( isset( $templates[ $name ]['wrapper'] ) && ( ! @include preg_replace( '/\.php$/', '_after.php', $templates[ $name ]['fullpath'] )))
-					echo '<!-- ERROR: the required template wrapper file is missing or unreadable. -->';
-
-				break;
-
-			default:
-				if( ! @include $templates[ $name ]['fullpath'] )
-					$this->_missing_template();
-
-		}
-	}
-
-	function get_actions( $type = 'post' )
-	{
-		$templates = $this->get_templates( $type );
-
-		$actions = array();
-
-		foreach( $templates as $template => $info )
-		{
-			$actions[ $template ] = array( 
-				'name' 		=> $info['name'],
-				'callback' 	=> array( $this , 'do_template' ),
-			);
-		}
-
-		return apply_filters( 'postloop_actions' , $actions );
-	}
-
-	function do_action( $type , $name , $event , $query_object , $widget )
-	{
-
-		$this->current = new stdClass;
-		$this->current->widget = $widget;
-		$this->current->query = $query_object;
-
-		$actions = $this->get_actions( $type );
-
-		if( isset( $actions[ $name ] ) && is_callable( $actions[ $name ]['callback'] ))
-			call_user_func( $actions[ $name ]['callback'] , $name , $event , $query_object , $this  , $widget );
-	}
-
-	function posts_where_comments_yes_once( $sql )
-	{
-		remove_filter( 'posts_where', array( &$this , 'posts_where_comments_yes_once' ), 10 );
-		return $sql . ' AND comment_count > 0 ';
-	}
-	function posts_where_comments_no_once( $sql )
-	{
-		remove_filter( 'posts_where', array( &$this , 'posts_where_comments_no_once' ), 10 );
-		return $sql . ' AND comment_count < 1 ';
-	}
-
-	function posts_where_date_since_once( $sql )
-	{
-		remove_filter( 'posts_where', array( &$this , 'posts_where_date_since_once' ), 10 );
-		return $sql . ' AND post_date > "'. $this->date_since .'"';
-	}
-
-	function posts_where_date_before_once( $sql )
-	{
-		remove_filter( 'posts_where', array( &$this , 'posts_where_date_since_once' ), 10 );
-		return $sql . ' AND post_date < "'. $this->date_before .'"';
-	}
-
-	function posts_join_recently_popular_once( $sql )
-	{
-		global $wpdb, $blog_id, $bsuite;
-
-		remove_filter( 'posts_join', array( &$this , 'posts_join_recently_popular_once' ), 10 );
-		return " INNER JOIN $bsuite->hits_pop AS popsort ON ( popsort.blog_id = $blog_id AND popsort.hits_recent > 0 AND $wpdb->posts.ID = popsort.post_ID ) ". $sql;
-	}
-
-	function posts_orderby_recently_popular_once( $sql )
-	{
-		remove_filter( 'posts_orderby', array( &$this , 'posts_orderby_recently_popular_once' ), 10 );
-		return ' popsort.hits_recent DESC, '. $sql;
-	}
-
-	function posts_fields_recently_commented_once( $sql )
-	{
-		remove_filter( 'posts_fields', array( &$this , 'posts_fields_recently_commented_once' ), 10 );
-		return $sql. ', MAX( commentsort.comment_date_gmt ) AS commentsort_order ';
-	}
-
-	function posts_join_recently_commented_once( $sql )
-	{
-		global $wpdb;
-
-		remove_filter( 'posts_join', array( &$this , 'posts_join_recently_commented_once' ), 10 );
-		return " INNER JOIN $wpdb->comments AS commentsort ON ( commentsort.comment_approved = 1 AND $wpdb->posts.ID = commentsort.comment_post_ID ) ". $sql;
-	}
-
-	function posts_groupby_recently_commented_once( $sql )
-	{
-		global $wpdb;
-
-		remove_filter( 'posts_groupby', array( &$this , 'posts_groupby_recently_commented_once' ), 10 );
-		return $wpdb->posts .'.ID' . ( empty( $sql ) ? '' : ', ' );
-	}
-
-	function posts_orderby_recently_commented_once( $sql )
-	{
-		remove_filter( 'posts_orderby', array( &$this , 'posts_orderby_recently_commented_once' ), 10 );
-		return ' commentsort_order DESC, '. $sql;
-	}
-
-	function posts_request( $request )
-	{
-		echo $request;
-		return $request;
-	}
-
-} //end bSuite_PostLoops
-
-// initialize that class
-global $postloops;
-$postloops = new bSuite_PostLoops();
-
 
 /**
- * PostLoop Scroller class
+ * bCMS_PostLoop_Widget class
  *
  */
-class bCMS_PostLoop_Scroller
-{
-	function __construct( $args = '' )
-	{
-
-		// get settings
-		$defaults = array(
-			// configuration
-			'actionname' => 'postloop_f_default_scroller',
-			'selector' => '.scrollable',
-			'lazy' => FALSE,
-			'css' => TRUE,
-
-			// scrollable options
-			'keyboard' => TRUE, // FALSE or 'static'
-			'circular' => TRUE,
-			'vertical' => FALSE,
-			'mousewheel' => FALSE,
-
-			// scrollable plugins
-			'navigator' => TRUE,  // FALSE or selector (html id or classname)
-			'autoscroll' => array(
-				'interval' => 2500,
-				'autoplay' => TRUE,
-				'autopause' => TRUE,
-				'steps' => 1,
-			)
-		);
-		$this->settings = (object) wp_parse_args( (array) $args , (array) $defaults );
-
-		// get the path to our scripts and styles
-		$this->path_web = plugins_url( plugin_basename( dirname( __FILE__ )));
-
-		// register scripts and styles
-		wp_register_script( 'scrollable', $this->path_web . '/js/scrollable.min.js', array('jquery'), TRUE );
-		bcms_late_enqueue_script( 'scrollable' );
-		add_filter( 'print_footer_scripts', array( $this, 'print_js' ), 10, 1 );
-
-		if( $this->settings->css )
-		{
-			wp_register_style( 'scrollable', $this->path_web .'/css/scrollable.css' );
-			bcms_late_enqueue_style( 'scrollable' );
-		}
-	}
-
-	function print_js( $finish_print )
-	{
-?>
-<script type="text/javascript">	
-	;(function($){
-		$(window).load(function(){
-			var $child = $('<?php echo $this->settings->child_selector; ?>');
-			var $parent = $('<?php echo $this->settings->parent_selector; ?>');
-
-			// set the size of some items
-			$child.width( $parent.width() );
-			$parent.height( $child.height() );
-
-			// initialize scrollable
-			$parent
-				.scrollable({ circular: true })
-				.navigator()
-				.autoscroll(<?php echo json_encode( $this->settings->autoscroll ); ?>);
-
-			//show the .items divs now that the scrollable is initialized
-			$child.width( $(window).width() ).show();
-		});
-	})(jQuery);
-</script>
-<?php
-		return $finish_print;
-	}
-}
-
-
-/**
- * PostLoop widget class
- *
- */
-class bSuite_Widget_PostLoop extends WP_Widget
+class bCMS_PostLoop_Widget extends WP_Widget
 {
 
 	var $ttl = 3607; // a prime number slightly longer than one hour
 
-
-	function bSuite_Widget_PostLoop()
+	function __construct()
 	{
 
 		$widget_ops = array('classname' => 'widget_postloop', 'description' => __( 'Build your own post loop') );
@@ -466,8 +20,8 @@ class bSuite_Widget_PostLoop extends WP_Widget
 
 	function wjiax_actions( $actions )
 	{
-		global $postloops, $mywijax;
-		foreach( $postloops->instances as $k => $v )
+		global $mywijax;
+		foreach( bcms_postloop()->instances as $k => $v )
 			$actions[ $mywijax->encoded_name( 'postloop-'. $k ) ] = (object) array( 'key' => 'postloop-'. $k , 'type' => 'widget');
 
 		return $actions;
@@ -475,7 +29,7 @@ class bSuite_Widget_PostLoop extends WP_Widget
 
 	function widget( $args, $instance )
 	{
-		global $bsuite, $postloops, $wpdb, $mywijax;
+		global $bsuite, $wpdb, $mywijax;
 
 		$cached = (object) array();
 
@@ -490,7 +44,7 @@ class bSuite_Widget_PostLoop extends WP_Widget
 			wp_reset_query();
 			global $wp_query;
 
-			$ourposts = &$wp_query;
+			$ourposts = $wp_query;
 
 		}// end if
 		else if( preg_match( '/^predefined_/' , $instance['query'] ))
@@ -518,25 +72,25 @@ class bSuite_Widget_PostLoop extends WP_Widget
 				$criteria['category__'. ( in_array( $instance['categoriesbool'], array( 'in', 'and', 'not_in' )) ? $instance['categoriesbool'] : 'in' ) ] = array_keys( (array) $instance['categories_in'] );
 
 			if( $instance['categories_in_related'] )
-				$criteria['category__'. ( in_array( $instance['categoriesbool'], array( 'in', 'and', 'not_in' )) ? $instance['categoriesbool'] : 'in' ) ] = array_merge( (array) $criteria['category__'. ( in_array( $instance['categoriesbool'], array( 'in', 'and', 'not_in' )) ? $instance['categoriesbool'] : 'in' ) ], (array) array_keys( (array) $postloops->terms[ $instance['categories_in_related'] ]['category'] ) );
+				$criteria['category__'. ( in_array( $instance['categoriesbool'], array( 'in', 'and', 'not_in' )) ? $instance['categoriesbool'] : 'in' ) ] = array_merge( (array) $criteria['category__'. ( in_array( $instance['categoriesbool'], array( 'in', 'and', 'not_in' )) ? $instance['categoriesbool'] : 'in' ) ], (array) array_keys( (array) bcms_postloop()->terms[ $instance['categories_in_related'] ]['category'] ) );
 
 			if( !empty( $instance['categories_not_in'] ))
 				$criteria['category__not_in'] = array_keys( (array) $instance['categories_not_in'] );
 
 			if( $instance['categories_not_in_related'] )
-				$criteria['category__not_in'] = array_merge( (array) $criteria['category__not_in'] , (array) array_keys( (array) $postloops->terms[ $instance['categories_not_in_related'] ]['category'] ));
+				$criteria['category__not_in'] = array_merge( (array) $criteria['category__not_in'] , (array) array_keys( (array) bcms_postloop()->terms[ $instance['categories_not_in_related'] ]['category'] ));
 
 			if( !empty( $instance['tags_in'] ))
 				$criteria['tag__'. ( in_array( $instance['tagsbool'], array( 'in', 'and', 'not_in' )) ? $instance['tagsbool'] : 'in' ) ] = $instance['tags_in'];
 
 			if( $instance['tags_in_related'] )
-				$criteria['tag__'. ( in_array( $instance['tagsbool'], array( 'in', 'and', 'not_in' )) ? $instance['tagsbool'] : 'in' ) ] = array_merge( (array) $criteria['tag__'. ( in_array( $instance['tagsbool'], array( 'in', 'and', 'not_in' )) ? $instance['tagsbool'] : 'in' ) ], (array) array_keys( (array) $postloops->terms[ $instance['tags_in_related'] ]['post_tag'] ) );
+				$criteria['tag__'. ( in_array( $instance['tagsbool'], array( 'in', 'and', 'not_in' )) ? $instance['tagsbool'] : 'in' ) ] = array_merge( (array) $criteria['tag__'. ( in_array( $instance['tagsbool'], array( 'in', 'and', 'not_in' )) ? $instance['tagsbool'] : 'in' ) ], (array) array_keys( (array) bcms_postloop()->terms[ $instance['tags_in_related'] ]['post_tag'] ) );
 
 			if( !empty( $instance['tags_not_in'] ))
 				$criteria['tag__not_in'] = $instance['tags_not_in'];
 
 			if( $instance['tags_not_in_related'] )
-				$criteria['tag__not_in'] = array_merge( (array) $criteria['tag__not_in'] , (array) array_keys( (array) $postloops->terms[ $instance['tags_not_in_related'] ]['post_tag'] ));
+				$criteria['tag__not_in'] = array_merge( (array) $criteria['tag__not_in'] , (array) array_keys( (array) bcms_postloop()->terms[ $instance['tags_not_in_related'] ]['post_tag'] ));
 
 			$tax_query = array();
 
@@ -544,7 +98,7 @@ class bSuite_Widget_PostLoop extends WP_Widget
 			if( $instance['tags_in_related'] )
 				$instance['tags_in'] = array_merge( 
 					(array) $instance['tags_in'] ,
-					(array) array_keys( (array) $postloops->terms['post_tag'][ $taxonomy ] )
+					(array) array_keys( (array) bcms_postloop()->terms['post_tag'][ $taxonomy ] )
 				);
 
 			if( count( $instance['tags_in'] ))
@@ -560,7 +114,7 @@ class bSuite_Widget_PostLoop extends WP_Widget
 			if( $instance['tags_not_in_related'] )
 				$instance['tags_not_in'] = array_merge( 
 					(array) $instance['tags_not_in'] , 
-					(array) array_keys( (array) $postloops->terms['post_tag'][ $taxonomy ] )
+					(array) array_keys( (array) bcms_postloop()->terms['post_tag'][ $taxonomy ] )
 				);
 
 			if( count( $instance['tags_not_in'] ))
@@ -581,7 +135,7 @@ class bSuite_Widget_PostLoop extends WP_Widget
 				if( $instance['tax_'. $taxonomy .'_in_related'] )
 					$instance['tax_'. $taxonomy .'_in'] = array_merge( 
 						(array) $instance['tax_'. $taxonomy .'_in'] ,
-						(array) array_keys( (array) $postloops->terms[ $instance['tax_'. $taxonomy .'_in_related'] ][ $taxonomy ] )
+						(array) array_keys( (array) bcms_postloop()->terms[ $instance['tax_'. $taxonomy .'_in_related'] ][ $taxonomy ] )
 					);
 
 				if( count( $instance['tax_'. $taxonomy .'_in'] ))
@@ -597,7 +151,7 @@ class bSuite_Widget_PostLoop extends WP_Widget
 				if( $instance['tax_'. $taxonomy .'_not_in_related'] )
 					$instance['tax_'. $taxonomy .'_not_in'] = array_merge( 
 						(array) $instance['tax_'. $taxonomy .'_not_in'] , 
-						(array) array_keys( (array) $postloops->terms[ $instance['tax_'. $taxonomy .'_not_in_related'] ][ $taxonomy ] )
+						(array) array_keys( (array) bcms_postloop()->terms[ $instance['tax_'. $taxonomy .'_not_in_related'] ][ $taxonomy ] )
 					);
 
 				if( count( $instance['tax_'. $taxonomy .'_not_in'] ))
@@ -622,10 +176,10 @@ class bSuite_Widget_PostLoop extends WP_Widget
 			switch( $instance['comments'] )
 			{
 				case 'yes':
-					add_filter( 'posts_where', array( &$postloops , 'posts_where_comments_yes_once' ), 10 );
+					add_filter( 'posts_where', array( bcms_postloop() , 'posts_where_comments_yes_once' ), 10 );
 					break;
 				case 'no':
-					add_filter( 'posts_where', array( &$postloops , 'posts_where_comments_no_once' ), 10 );
+					add_filter( 'posts_where', array( bcms_postloop() , 'posts_where_comments_no_once' ), 10 );
 					break;
 				default:
 					break;
@@ -633,18 +187,19 @@ class bSuite_Widget_PostLoop extends WP_Widget
 
 			if( 0 < $instance['age_num'] )
 			{
-				$postloops->date_before = $postloops->date_since = date( 'Y-m-d' , strtotime( $instance['age_num'] .' '. $instance['age_unit'] .' ago' ));
+				bcms_postloop()->date_before = bcms_postloop()->date_since = date( 'Y-m-d' , strtotime( $instance['age_num'] .' '. $instance['age_unit'] .' ago' ));
 				if( $instance['age_bool'] == 'older' )
-					add_filter( 'posts_where', array( &$postloops , 'posts_where_date_before_once' ), 10 );
+					add_filter( 'posts_where', array( bcms_postloop() , 'posts_where_date_before_once' ), 10 );
 				else
-					add_filter( 'posts_where', array( &$postloops , 'posts_where_date_since_once' ), 10 );
+					add_filter( 'posts_where', array( bcms_postloop() , 'posts_where_date_since_once' ), 10 );
 			}
 
 			if( isset( $_GET['wijax'] ) && absint( $_GET['paged'] ))
 				$criteria['paged'] = absint( $_GET['paged'] );
 			$criteria['showposts'] = absint( $instance['count'] );
 
-			switch( $instance['order'] ){
+			switch( $instance['order'] )
+			{
 				case 'age_new':
 					$criteria['orderby'] = 'date';
 					$criteria['order'] = 'DESC';
@@ -666,10 +221,10 @@ class bSuite_Widget_PostLoop extends WP_Widget
 					break;
 
 				case 'comment_new':
-					add_filter( 'posts_fields',		array( &$postloops , 'posts_fields_recently_commented_once' ), 10 );
-					add_filter( 'posts_join',		array( &$postloops , 'posts_join_recently_commented_once' ), 10 );
-					add_filter( 'posts_groupby',	array( &$postloops , 'posts_groupby_recently_commented_once' ), 10 );
-					add_filter( 'posts_orderby',	array( &$postloops , 'posts_orderby_recently_commented_once' ), 10 );
+					add_filter( 'posts_fields',		array( bcms_postloop() , 'posts_fields_recently_commented_once' ), 10 );
+					add_filter( 'posts_join',		array( bcms_postloop() , 'posts_join_recently_commented_once' ), 10 );
+					add_filter( 'posts_groupby',	array( bcms_postloop() , 'posts_groupby_recently_commented_once' ), 10 );
+					add_filter( 'posts_orderby',	array( bcms_postloop() , 'posts_orderby_recently_commented_once' ), 10 );
 					break;
 
 				case 'comment_count':
@@ -680,8 +235,8 @@ class bSuite_Widget_PostLoop extends WP_Widget
 				case 'pop_recent':
 					if( is_object( $bsuite ))
 					{
-						add_filter( 'posts_join',		array( &$postloops , 'posts_join_recently_popular_once' ), 10 );
-						add_filter( 'posts_orderby',	array( &$postloops , 'posts_orderby_recently_popular_once' ), 10 );
+						add_filter( 'posts_join',		array( bcms_postloop() , 'posts_join_recently_popular_once' ), 10 );
+						add_filter( 'posts_orderby',	array( bcms_postloop() , 'posts_orderby_recently_popular_once' ), 10 );
 						break;
 					}
 
@@ -699,8 +254,8 @@ class bSuite_Widget_PostLoop extends WP_Widget
 			{
 				foreach( $instance['relatedto'] as $related_loop => $temp )
 				{
-					if( isset( $postloops->posts[ $related_loop ] ))
-						$criteria['post__not_in'] = array_merge( (array) $criteria['post__not_in'] , $postloops->posts[ $related_loop ] );
+					if( isset( bcms_postloop()->posts[ $related_loop ] ))
+						$criteria['post__not_in'] = array_merge( (array) $criteria['post__not_in'] , bcms_postloop()->posts[ $related_loop ] );
 					else
 						echo '<!-- error: related post loop is not available -->';
 				}
@@ -708,12 +263,14 @@ class bSuite_Widget_PostLoop extends WP_Widget
 			else if( 'similar' == $instance['relationship'] && count( (array) $instance['relatedto'] ))
 			{
 				if( ! class_exists( 'bSuite_bSuggestive' ) )
+				{
 					require_once( dirname( __FILE__) .'/bsuggestive.php' );
+				}
 
 				foreach( $instance['relatedto'] as $related_loop => $temp )
 				{
-					if( isset( $postloops->posts[ $related_loop ] ))
-						$posts_for_related = array_merge( (array) $posts_for_related , $postloops->posts[ $related_loop ] );
+					if( isset( bcms_postloop()->posts[ $related_loop ] ))
+						$posts_for_related = array_merge( (array) $posts_for_related , bcms_postloop()->posts[ $related_loop ] );
 					else
 						echo '<!-- error: related post loop is not available -->';
 				}
@@ -728,7 +285,7 @@ class bSuite_Widget_PostLoop extends WP_Widget
 				);
 			}
 
-			//echo '<pre>'. print_r( $postloops , TRUE ) .'</pre>';
+			//echo '<pre>'. print_r( bcms_postloop() , TRUE ) .'</pre>';
 			//echo '<pre>'. print_r( $instance , TRUE ) .'</pre>';
 
 			// allow filtering of the criteria
@@ -779,12 +336,12 @@ class bSuite_Widget_PostLoop extends WP_Widget
 		{
 
 			// get the templates, thumbnail size, and other stuff
-			$this->post_templates = (array) $postloops->get_templates('post');
+			$this->post_templates = (array) bcms_postloop()->get_templates('post');
 			$cached->template = $this->post_templates[ $instance['template'] ];
 
-			$postloops->current_postloop = &$instance;
+			bcms_postloop()->current_postloop = $instance;
 
-			$postloops->thumbnail_size = isset( $instance['thumbnail_size'] ) ? $instance['thumbnail_size'] : 'nines-thumbnail-small';
+			bcms_postloop()->thumbnail_size = isset( $instance['thumbnail_size'] ) ? $instance['thumbnail_size'] : 'nines-thumbnail-small';
 
 			// open an output buffer and start processing the loop
 			ob_start();
@@ -793,10 +350,10 @@ class bSuite_Widget_PostLoop extends WP_Widget
 
 			// old actions
 			$action_name = 'postloop_'. sanitize_title( basename( $instance['template'] , '.php' ));
-			do_action( $action_name , 'before' , $ourposts , $postloops );
+			do_action( $action_name , 'before' , $ourposts , bcms_postloop() );
 
 			// new actions
-			$postloops->do_action( 'post' , $instance['template'], 'before' , $ourposts , $this );
+			bcms_postloop()->do_action( 'post' , $instance['template'], 'before' , $ourposts , $this );
 
 			while( $ourposts->have_posts() )
 			{
@@ -821,46 +378,46 @@ class bSuite_Widget_PostLoop extends WP_Widget
 
 				global $id, $post;
 
-				// get the matching post IDs for the $postloops object
-				$postloops->posts[ $this->number ][] = $id;
+				// get the matching post IDs for the bcms_postloop() object
+				bcms_postloop()->posts[ $this->number ][] = $id;
 
 				// get the matching terms by taxonomy
 				$terms = get_object_term_cache( $id, (array) get_object_taxonomies( $post->post_type ) );
 				if ( empty( $terms ))
 					$terms = wp_get_object_terms( $id, (array) get_object_taxonomies( $post->post_type ) );
 
-				// get the term taxonomy IDs for the $postloops object
+				// get the term taxonomy IDs for the bcms_postloop() object
 				foreach( $terms as $term )
 				{
-					if ( ! isset( $postloops->terms[ $this->number ] ) )
+					if ( ! isset( bcms_postloop()->terms[ $this->number ] ) )
 					{
-						$postloops->terms[ $this->number ] = array( $term->taxonomy =>  array( $term->term_id =>0 ) );
+						bcms_postloop()->terms[ $this->number ] = array( $term->taxonomy =>  array( $term->term_id =>0 ) );
 					}
-					elseif ( ! isset( $postloops->terms[ $this->number ][ $term->taxonomy ] ) )
+					elseif ( ! isset( bcms_postloop()->terms[ $this->number ][ $term->taxonomy ] ) )
 					{
-						$postloops->terms[ $this->number ][ $term->taxonomy ] = array( $term->term_id =>0 );
+						bcms_postloop()->terms[ $this->number ][ $term->taxonomy ] = array( $term->term_id =>0 );
 					}
-					elseif ( ! isset( $postloops->terms[ $this->number ][ $term->taxonomy ][ $term->term_id ] ) )
+					elseif ( ! isset( bcms_postloop()->terms[ $this->number ][ $term->taxonomy ][ $term->term_id ] ) )
 					{
-						$postloops->terms[ $this->number ][ $term->taxonomy ][ $term->term_id ] = 0;	
+						bcms_postloop()->terms[ $this->number ][ $term->taxonomy ][ $term->term_id ] = 0;	
 					}
 						
-					$postloops->terms[ $this->number ][ $term->taxonomy ][ $term->term_id ]++;
+					bcms_postloop()->terms[ $this->number ][ $term->taxonomy ][ $term->term_id ]++;
 				}
 
 				// old actions
-				do_action( $action_name , 'post' , $ourposts , $postloops );
+				do_action( $action_name , 'post' , $ourposts , bcms_postloop() );
 
 				// new actions
-				$postloops->do_action( 'post' , $instance['template'] , '' , $ourposts , $this );
+				bcms_postloop()->do_action( 'post' , $instance['template'] , '' , $ourposts , $this );
 
 			}
 
 			// old actions
-			do_action( $action_name , 'after' , $ourposts , $postloops );
+			do_action( $action_name , 'after' , $ourposts , bcms_postloop() );
 
 			// new actions
-			$postloops->do_action( 'post' , $instance['template'] , 'after' , $ourposts , $this );
+			bcms_postloop()->do_action( 'post' , $instance['template'] , 'after' , $ourposts , $this );
 
 			$cached->html = ob_get_clean();
 			// end process the loop
@@ -891,12 +448,13 @@ class bSuite_Widget_PostLoop extends WP_Widget
 				wp_cache_set( $cachekey , (object) array( 'html' => $cached->html , 'template' => $cached->template , 'instance' => $instance , 'time' => time() ) , 'bcmspostloop' , $this->ttl );
 		}
 
-		unset( $postloops->current_postloop );
+		unset( bcms_postloop()->current_postloop );
 
-//print_r( $postloops );
+//print_r( bcms_postloop() );
 	}
 
-	function update( $new_instance, $old_instance ) {
+	function update( $new_instance, $old_instance )
+	{
 
 		$instance = $old_instance;
 
@@ -1000,11 +558,12 @@ die;
 		return $instance;
 	}
 
-	function form( $instance ) {
-		global $postloops, $bsuite;
+	function form( $instance )
+	{
+		global $bsuite;
 
 		// reset the instances var, in case a new widget was added
-		$postloops->get_instances();
+		bcms_postloop()->get_instances();
 
 		//Defaults
 
@@ -1119,7 +678,8 @@ die;
 		
 					<?php
 					$tags_in = array();
-					foreach( $instance['tags_in'] as $tag_id ){
+					foreach( $instance['tags_in'] as $tag_id )
+					{
 						$temp = get_term( $tag_id, 'post_tag' );
 						$tags_in[] = $temp->name;
 					}
@@ -1131,9 +691,12 @@ die;
 					<br />And terms from<br /><select name="<?php echo $this->get_field_name( 'tags_in_related' ); ?>" id="<?php echo $this->get_field_id( 'tags_in_related' ); ?>" class="widefat <?php if( $instance[ 'tags_in_related' ] ) echo 'open-on-value'; ?>">
 						<option value="0" '. <?php selected( (int) $instance[ 'tags_in_related' ] , 0 ) ?> .'></option>
 <?php
-						foreach( $postloops->instances as $number => $loop ){
+						foreach( bcms_postloop()->instances as $number => $loop )
+						{
 							if( $number == $this->number )
+							{
 								continue;
+							}
 				
 							echo '<option value="'. $number .'" '. selected( (int) $instance[ 'tags_in_related' ] , (int) $number , FALSE ) .'>'. $loop['title'] .'<small> (id:'. $number .')</small></option>';
 						}
@@ -1146,7 +709,8 @@ die;
 					<label for="<?php echo $this->get_field_id('tags_not_in'); ?>"><?php _e( 'With none of these tags' ); ?></label>
 					<?php
 					$tags_not_in = array();
-					foreach( $instance['tags_not_in'] as $tag_id ){
+					foreach( $instance['tags_not_in'] as $tag_id )
+					{
 						$temp = get_term( $tag_id, 'post_tag' );
 						$tags_not_in[] = $temp->name;
 					}
@@ -1158,9 +722,12 @@ die;
 					<br />And terms from<br /><select name="<?php echo $this->get_field_name( 'tags_not_in_related' ); ?>" id="<?php echo $this->get_field_id( 'tags_not_in_related' ); ?>" class="widefat <?php if ( $instance['tags_not_in_related' ] ) echo 'open-on-value'; ?>">
 						<option value="0" '. <?php selected( $instance['tags_not_in_related'], 0 ); ?> .'></option>
 <?php
-						foreach( $postloops->instances as $number => $loop ){
+						foreach( bcms_postloop()->instances as $number => $loop )
+						{
 							if( $number == $this->number )
+							{
 								continue;
+							}
 				
 							echo '<option value="'. $number .'" '. selected( (int) $instance[ 'tags_not_in_related' ] , (int) $number , FALSE ) .'>'. $loop['title'] .'<small> (id:'. $number .')</small></option>';
 						}
@@ -1244,9 +811,13 @@ die;
 			<div id="<?php echo $this->get_field_id('count'); ?>-contents" class="contents hide-if-js">
 				<p>
 					<select name="<?php echo $this->get_field_name('count'); ?>" id="<?php echo $this->get_field_id('count'); ?>" class="widefat">
-					<?php for( $i = 1; $i < 51; $i++ ){ ?>
+					<?php 
+					for( $i = 1; $i < 51; $i++ )
+					{ ?>
 						<option value="<?php echo $i; ?>" <?php selected( $instance['count'], $i ); ?>><?php echo $i; ?></option>
-					<?php } ?>
+					<?php 
+					}
+					?>
 					</select>
 				</p>
 			</div>
@@ -1374,11 +945,10 @@ die;
 		}
 
 		// get the select list to choose categories from items shown in another instance
-		global $postloops;
 		$instance[ $whichfield .'_related' ] = isset( $instance[ $whichfield .'_related' ] ) ? $instance[ $whichfield .'_related' ] : 0;
 
 		$related_instance_select = '<option value="0" '. selected( $instance[ $whichfield .'_related' ], 0, FALSE ) . '></option>';
-		foreach( $postloops->instances as $number => $loop )
+		foreach( bcms_postloop()->instances as $number => $loop )
 		{
 			if( $number == $this->number )
 				continue;
@@ -1393,8 +963,6 @@ die;
 	
 	function control_taxonomies( $instance , $post_type )
 	{
-		global $postloops;
-
 		if( $post_type == 'normal' )
 			return;
 
@@ -1423,9 +991,11 @@ die;
 			
 						<?php
 						$tags_in = array();
-						foreach( $instance['tax_'. $taxonomy .'_in'] as $tag_id ){
+						foreach( $instance['tax_'. $taxonomy .'_in'] as $tag_id )
+						{
 							$temp = get_term( $tag_id, $taxonomy );
-							if ( is_object( $temp ) ) {
+							if ( is_object( $temp ) )
+							{
 								$tags_in[] = $temp->name;
 							}
 						}
@@ -1437,7 +1007,8 @@ die;
 						<br />And terms from<br /><select name="<?php echo $this->get_field_name( 'tax_'. $taxonomy .'_in_related' ); ?>" id="<?php echo $this->get_field_id( 'tax_'. $taxonomy .'_in_related' ); ?>" class="widefat <?php if( $instance[ 'tax_'. $taxonomy .'_in_related' ] ) echo 'open-on-value'; ?>">
 							<option value="0" '. <?php selected( $instance[ 'tax_'. $taxonomy .'_in_related' ] , 0 ) ?> .'></option>
 <?php
-							foreach( $postloops->instances as $number => $loop ){
+							foreach( bcms_postloop()->instances as $number => $loop )
+							{
 								if( $number == $this->number )
 									continue;
 					
@@ -1452,9 +1023,11 @@ die;
 						<label for="<?php echo $this->get_field_id('tax_'. $taxonomy .'_not_in'); ?>"><?php _e( 'With none of these terms' ); ?></label>
 						<?php
 						$tags_not_in = array();
-						foreach( (array) $instance['tax_'. $taxonomy .'_not_in'] as $tag_id ){
+						foreach( (array) $instance['tax_'. $taxonomy .'_not_in'] as $tag_id )
+						{
 							$temp = get_term( $tag_id, $taxonomy );
-							if ( is_object( $temp ) ) {
+							if ( is_object( $temp ) )
+							{
 								$tags_not_in[] = $temp->name;
 							}
 						}
@@ -1466,7 +1039,8 @@ die;
 						<br />And terms from<br /><select name="<?php echo $this->get_field_name( 'tax_'. $taxonomy .'_not_in_related' ); ?>" id="<?php echo $this->get_field_id( 'tax_'. $taxonomy .'_not_in_related' ); ?>" class="widefat <?php if( $instance[ 'tax_'. $taxonomy .'_not_in_related' ] ) echo 'open-on-value'; ?>">
 							<option value="0" '. <?php selected( (int) $instance[ 'tax_'. $taxonomy .'_not_in_related' ] , 0 ) ?> .'></option>
 <?php
-							foreach( $postloops->instances as $number => $loop ){
+							foreach( bcms_postloop()->instances as $number => $loop )
+							{
 								if( $number == $this->number )
 									continue;
 					
@@ -1484,10 +1058,8 @@ die;
 	
 	function control_instances( $selected = array() )
 	{
-		global $postloops;
-
 		$list = array();
-		foreach( $postloops->instances as $number => $instance )
+		foreach( bcms_postloop()->instances as $number => $instance )
 		{
 			if( $number == $this->number )
 				continue;
@@ -1502,9 +1074,7 @@ die;
 	
 	function control_template_dropdown( $default = '' )
 	{
-		global $postloops;
-
-		foreach ( $postloops->get_actions('post') as $template => $info ) :
+		foreach ( bcms_postloop()->get_actions('post') as $template => $info ) :
 			if ( $default == $template )
 				$selected = " selected='selected'";
 			else
@@ -1513,23 +1083,18 @@ die;
 		endforeach;
 	}
 
-	function tax_posttype_classes( $taxonomy ) {
+	function tax_posttype_classes( $taxonomy )
+	{
 		$tax = get_taxonomy($taxonomy);
 
-		if( ! $tax || count( $tax->object_type ) == 0 ) {
+		if( ! $tax || count( $tax->object_type ) == 0 )
+		{
 			return '';
 		}
 
 		return 'querytype_custom ' . implode( ' posttype_', $tax->object_type );
 	}
-}// end bSuite_Widget_Postloop
-
-
-// register these widgets
-function postloops_widgets_init() {
-	register_widget( 'bSuite_Widget_PostLoop' );
-}
-add_action('widgets_init', 'postloops_widgets_init', 1);
+}// end bCMS_PostLoop_Widget
 
 /*
 Reminder to self: the widget objects and their vars can be found in here:

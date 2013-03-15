@@ -10,12 +10,18 @@ Author URI: http://maisonbisson.com/blog/
 
 // the admin menu
 if ( is_admin() )
+{
 	require_once dirname( __FILE__ ) . '/admin.php';
+}
 
 // include the core components
-require_once( dirname( __FILE__ ) .'/components/postloops.php' );
+require_once( dirname( __FILE__ ) .'/components/class-bcms-postloop.php' );
+require_once( dirname( __FILE__ ) .'/components/class-bcms-postloop-widget.php' );
+require_once( dirname( __FILE__ ) .'/components/functions.php' );
 require_once( dirname( __FILE__ ) .'/components/wijax.php' );
 require_once( dirname( __FILE__ ) .'/components/late-enqueue.php' );
+add_action( 'widgets_init', 'bcms_widgets_init', 1 );
+
 
 // override the URL path by setting it in the object as such:
 // $postloops->path_web = 
@@ -27,5 +33,7 @@ require_once( dirname( __FILE__ ) .'/components/listchildren.php' );
 require_once( dirname( __FILE__ ) .'/components/privacy.php' );
 
 // optionally include the mysql-based full text indexing
-if( get_option('bcms_searchsmart'))
+if( get_option( 'bcms_searchsmart' ))
+{
 	require_once( dirname( __FILE__ ) .'/components/search.php' );
+}
