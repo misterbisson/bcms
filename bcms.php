@@ -16,9 +16,12 @@ if ( is_admin() )
 
 // include the core components
 require_once( dirname( __FILE__ ) .'/components/class-bcms-postloop.php' );
+bcms_postloop();
+require_once( dirname( __FILE__ ) .'/components/class-bcms-wijax.php' );
+bcms_wijax();
 require_once( dirname( __FILE__ ) .'/components/class-bcms-postloop-widget.php' );
+require_once( dirname( __FILE__ ) .'/components/class-bcms-wijax-widget.php' );
 require_once( dirname( __FILE__ ) .'/components/functions.php' );
-require_once( dirname( __FILE__ ) .'/components/wijax.php' );
 require_once( dirname( __FILE__ ) .'/components/late-enqueue.php' );
 add_action( 'widgets_init', 'bcms_widgets_init', 1 );
 

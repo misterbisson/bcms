@@ -1,9 +1,9 @@
 <?php
 /**
- * Wijax class
+ * bCMS_Wijax class
  *
  */
-class bSuite_Wijax
+class bCMS_Wijax
 {
 	var $ep_name_ajax = 'wijax';
 	var $ep_name_iframe = 'wiframe';
@@ -29,7 +29,7 @@ class bSuite_Wijax
 
 		add_filter( 'request' , array( $this, 'request' ));
 
-		if( ! is_admin())
+		if ( ! is_admin() )
 		{
 			wp_register_script( 'waypoints', $this->path_web . '/js/waypoints.min.js', array('jquery'), '1' );
 			wp_enqueue_script( 'waypoints' );
@@ -46,7 +46,7 @@ class bSuite_Wijax
 
 	function normalize_url( $url , $local = true )
 	{
-		if( $local )
+		if ( $local )
 		{
 			// trim the host component from the given url
 			$home_path = parse_url( home_url() , PHP_URL_PATH );
@@ -63,7 +63,7 @@ class bSuite_Wijax
 
 	function varname( $url = '' , $local = true )
 	{
-		if( $url )
+		if ( $url )
 		{
 			$base = $this->normalize_url( $url , $local );
 		}
@@ -82,32 +82,32 @@ class bSuite_Wijax
 
 	function widgets_init()
 	{
-		register_widget( 'Wijax_Widget' );
+		register_widget( 'bCMS_Wijax_Widget' );
 
 		register_sidebar( array(
-			'name' => __( 'Wijax Widgets', 'Bsuite' ),
+			'name' => __( 'Wijax Widgets', 'bCMS' ),
 			'id' => 'wijax-area',
-			'description' => __( 'Place widgets here to configure them for lazy loading using the Wijax widget.', 'Bsuite' ),
+			'description' => __( 'Place widgets here to configure them for lazy loading using the Wijax widget.', 'bCMS' ),
 		) );
 	}
 
 	public function request( $request )
 	{
 		// is this a Wijax request?
-		if( isset( $request[ $this->ep_name_ajax ] ))
+		if ( isset( $request[ $this->ep_name_ajax ] ))
 		{
 			$this->method = $this->ep_name_ajax;
 		}
 		
 		// or is this a Wiframe request?
-		elseif( isset( $request[ $this->ep_name_iframe ] ))
+		elseif ( isset( $request[ $this->ep_name_iframe ] ))
 		{
 			include_once dirname( __FILE__ ) . '/class-bcms-wiframe-encode.php';
 			$this->method = $this->ep_name_iframe;
 		}
 		
 		// or is this a Wiframe source request?
-		elseif( isset( $request[ $this->ep_name_iframe_source ] ))
+		elseif ( isset( $request[ $this->ep_name_iframe_source ] ))
 		{
 			$js = file_get_contents( dirname( __FILE__ ) . '/js/bcms-wiframe.js' );
 			
@@ -132,44 +132,50 @@ class bSuite_Wijax
 
 	function redirect()
 	{
-		global $postloops, $wp_registered_widgets;
+		global $wp_registered_widgets;
 
 		$requested_widgets = array_filter( array_map( 'trim' , (array) explode( ',' , get_query_var( $this->method ) )));
 
-		if( 1 > count( $requested_widgets ))
+		if ( 1 > count( $requested_widgets ))
+		{
 			die;
+		}
 
 		// establish the available actions
 		$actions = array();
 
 		// get the available postloop templates
-		if( is_object( $postloops ) && ( $postloop_templates = $postloops->get_templates( 'post' )))
+		if ( $postloop_templates = bcms_postloop()->get_templates( 'post' ) )
 		{
-			foreach( $postloop_templates as $k => $v )
+			foreach ( $postloop_templates as $k => $v )
+			{
 				$actions[ $this->encoded_name( 'templates-post-'. basename( $k , '.php' ) ) ] = (object ) array( 'key' => $k , 'type' => 'postloop');
+			}
 		}
 
 		// get the available widgets in the wijax area
-		if( ( $widgets = wp_get_sidebars_widgets() ) && is_array( $widgets['wijax-area'] ))
+		if ( ( $widgets = wp_get_sidebars_widgets() ) && is_array( $widgets['wijax-area'] ))
 		{
-			foreach( $widgets['wijax-area'] as $k)
+			foreach ( $widgets['wijax-area'] as $k )
+			{
 				$actions[ $this->encoded_name( $k ) ] = (object ) array( 'key' => $k , 'type' => 'widget');
+			}
 		}
 
 		// filter to allow lazy-loading of widgets without them being in the wijax area
 		$actions = apply_filters( 'wijax-actions', $actions );
 
-		foreach( $requested_widgets as $key )
+		foreach ( $requested_widgets as $key )
 		{
 			// try the requested key against the md5 list
-			if( ! isset( $actions[ $key ] ))
+			if ( ! isset( $actions[ $key ] ))
 			{
 				// allow plaintext queries when handling wiframe queries or if allowed in the config
-				if( $this->method == $this->ep_name_iframe || $this->allow_plaintext )
+				if ( $this->method == $this->ep_name_iframe || $this->allow_plaintext )
 				{
 					// md5 the key and try that against the list
 					$key = $this->encoded_name( $key );
-					if( ! isset( $actions[ $key ] ))
+					if ( ! isset( $actions[ $key ] ))
 					{
 						die;					
 					}
@@ -206,22 +212,17 @@ class bSuite_Wijax
 
 	function do_postloop( $template )
 	{
-		global $postloops, $wp_query;
+		global $wp_query;
 
-		if ( ! is_object( $postloops ) )
-		{
-			return FALSE;
-		}
+		$postloop_templates = bcms_postloop()->get_templates( 'post' );
 
-		$postloop_templates = $postloops->get_templates( 'post' );
-
-		$ourposts = &$wp_query;
-		if( $ourposts->have_posts() )
+		$ourposts = $wp_query;
+		if ( $ourposts->have_posts() )
 		{
 			while( $ourposts->have_posts() )
 			{
 				$ourposts->the_post();
-				 @include $postloop_templates[ $template ]['fullpath'];
+				@include $postloop_templates[ $template ]['fullpath'];
 			}
 		}
 	}
@@ -230,13 +231,15 @@ class bSuite_Wijax
 	{
 		global $wp_registered_widgets;
 
-		if( ! $widget_data = $wp_registered_widgets[ $key ] )
+		if ( ! $widget_data = $wp_registered_widgets[ $key ] )
 			return;
 
 		preg_match( '/\-([0-9]+)$/' , $key , $instance_number );
 		$instance_number = absint( $instance_number[1] );
-		if( ! $instance_number )
+		if ( ! $instance_number )
+		{
 			return;
+		}
 
 		$widget_data['widget'] = $key;
 
@@ -303,7 +306,7 @@ class bSuite_Wijax
 					var widget_title = $widget_title_el.text();
 
 					//don't set a widget title div if there is no title text
-					if(widget_title)
+					if (widget_title)
 						$widget_parent.prepend(title_before + widget_title + title_after);
 					
 					$widget_title_el.remove();
@@ -329,7 +332,7 @@ class bSuite_Wijax
 
 			// if we've already scrolled or there is a hash in the url,
 			// fire the scroll event and get the excerpts and widgets	
-			if( ( document.location.hash ) || ( window.pageYOffset > 25 ) || ( document.body.scrollTop > 25 ) )
+			if ( ( document.location.hash ) || ( window.pageYOffset > 25 ) || ( document.body.scrollTop > 25 ) )
 				$( document ).trigger( 'scroll' );
 		});	
 
@@ -346,180 +349,7 @@ class bSuite_Wijax
 		return $finish_print;
 	}
 
-} //end bSuite_Wijax
-
-// initialize that class
-global $mywijax;
-$mywijax = new bSuite_Wijax();
-
-/**
- * Wijax widget class
- *
- */
-class Wijax_Widget extends WP_Widget
-{
-
-	function Wijax_Widget()
-	{
-		$widget_ops = array('classname' => 'widget_wijax', 'description' => __( 'Lazy load widgets after DOMDocumentReady') );
-		$this->WP_Widget('wijax', __('Wijax Widget Lazy Loader'), $widget_ops);
-
-		add_filter( 'wijax-base-current' , array( $this , 'base_current' ) , 5 );
-		add_filter( 'wijax-base-home' , array( $this , 'base_home' ) , 5 );
-	}
-
-	function widget( $args, $instance )
-	{
-		global $mywijax;
-
-		extract( $args );
-
-		if( 'remote' != $instance['base'] )
-		{
-			$base = apply_filters( 'wijax-base-'. $instance['base'] , '' );
-			if( ! $base )
-				return;
-			$wijax_source = $base . $mywijax->encoded_name( $instance['widget'] );
-			$wijax_varname = $mywijax->varname( $wijax_source );
-		}
-		else
-		{
-			$wijax_source = $instance['base-remote'] . $mywijax->encoded_name( $instance['widget-custom'] );
-			$wijax_varname = $mywijax->varname( $wijax_source , FALSE );
-		}
-
-		echo $before_widget;
-
-		preg_match( '/<([\S]*)/' , $before_title , $title_element );
-		$title_element = trim( (string) $title_element[1] , '<>');
-
-		preg_match( '/class.*?=.*?(\'|")(.+?)(\'|")/' , $before_title , $title_class );
-		$title_class = (string) $title_class[2];
-
-		$loadtime = ($instance['loadtime']) ? $instance['loadtime'] : 'onload';
-?>
-		<span class="wijax-loading">
-			<img src="<?php echo $mywijax->path_web  .'/img/loading-gray.gif'; ?>" alt="loading external resource" />
-			<a href="<?php echo $wijax_source; ?>" class="wijax-source <?php echo 'wijax-' . $loadtime;?>" rel="nofollow"></a>
-			<span class="wijax-opts" style="display: none;">
-				<?php echo json_encode( array( 
-					'source' => $wijax_source ,
-					'varname' => $wijax_varname , 
-					'title_element' => $title_element ,
-					'title_class' => $title_class ,
-					'title_before' => rawurlencode( $before_title ),
-					'title_after' => rawurlencode( $after_title ),
-				)); ?>
-			</span>
-		</span>
-<?php
-		echo $after_widget;
-	}
-
-	function base_home()
-	{
-
-		return trailingslashit( home_url() ) .'wijax/';
-	}
-
-	function base_current()
-	{
-
-		$home_path = parse_url( home_url() , PHP_URL_PATH );
-		return esc_url_raw( trailingslashit( home_url() . str_replace( $home_path , '' , parse_url( $_SERVER['REQUEST_URI'] , PHP_URL_PATH ))) .'wijax/' );
-	}
-
-	function update( $new_instance, $old_instance )
-	{
-		$instance = $old_instance;
-		$instance['title'] = strip_tags( $new_instance['title'] );
-		$instance['widget'] = sanitize_title( $new_instance['widget'] );
-		$instance['widget-custom'] = sanitize_title( $new_instance['widget-custom'] );
-		$instance['base'] = sanitize_title( $new_instance['base'] );
-		$instance['base-remote'] = esc_url_raw( $new_instance['base-remote'] );
-		$instance['loadtime'] = in_array( $new_instance['loadtime'], array( 'onload', 'onscroll') ) ? $new_instance['loadtime'] : 'onscroll';
-
-		return $instance;
-	}
-
-	function form( $instance )
-	{
-		//Defaults
-		$instance = wp_parse_args( (array) $instance, 
-			array( 
-				'title' => '', 
-				'homelink' => get_option('blogname'),
-				'maxchars' => 35,
-			)
-		);
-
-		$title = esc_attr( $instance['title'] );
-?>
-		<p>
-			<label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title'); ?></label> <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo $title; ?>" /><br />
-			<small>For convenience, not shown publicly</small
-		</p>
-<?php
-		echo $this->control_widgets( $instance );
-		echo $this->control_base( $instance );
-		echo $this->control_loadtime( $instance );
-	}
-
-	function control_widgets( $instance , $whichfield = 'widget' )
-	{
-		// get the available widgets
-		$sidebars_widgets = wp_get_sidebars_widgets();
-		$list = '';
-		$instance[ $whichfield ] = isset( $instance[ $whichfield ] ) ? $instance[ $whichfield ] : '';
-		$instance[ $whichfield . '-custom' ] = isset( $instance[ $whichfield . '-custom' ] ) ? $instance[ $whichfield . '-custom' ] : '';
-
-		foreach( (array) $sidebars_widgets['wijax-area'] as $item )
-		{
-			$list .= '<option value="'. $item .'" '. selected( $instance[ $whichfield ] , $item , FALSE ) .'>'. $item .'</option>';
-		}
-		$list .= '<option value="custom" '. selected( $instance[ $whichfield ] , 'custom' , FALSE ) .'>Custom widget</option>';
-
-		return '<p><label for="'. $this->get_field_id( $whichfield ) .'">Widget</label><select name="'. $this->get_field_name( $whichfield ) .'" id="'. $this->get_field_id( $whichfield ) .'" class="widefat">'. $list . '</select></p><p><label for="'. $this->get_field_id( $whichfield .'-custom' ) .'">Custom Widget Name</label><input name="'. $this->get_field_name( $whichfield .'-custom' ) .'" id="'. $this->get_field_id( $whichfield .'-custom' ) .'" class="widefat" type="text" value="'. sanitize_title( $instance[ $whichfield .'-custom' ] ).'"></p>';
-	}
-
-	function control_base( $instance , $whichfield = 'base' )
-	{
-
-		$bases = apply_filters( 'wijax-bases' , array(
-			'current' => 'The currently requested URL',
-			'home' => 'The blog home URL',
-			'remote' => 'Remote base URL',
-		));
-
-		$instance[ $whichfield ] = isset( $instance[ $whichfield ] ) ? $instance[ $whichfield ] : '';
-		$instance[ $whichfield . '-remote' ] = isset( $instance[ $whichfield . '-remote' ] ) ? $instance[ $whichfield . '-remote' ] : '';
-
-		$list = '';
-		foreach( (array) $bases as $k => $v )
-			$list .= '<option value="'. $k .'" '. selected( $instance[ $whichfield ] , $k , FALSE ) .'>'. $v .'</option>';
-
-		return '<p><label for="'. $this->get_field_id( $whichfield ) .'">Base URL</label><select name="'. $this->get_field_name( $whichfield ) .'" id="'. $this->get_field_id( $whichfield ) .'" class="widefat">'. $list . '</select><br /><small>The base URL affects widget content and caching</small></p><p><label for="'. $this->get_field_id( $whichfield .'-remote' ) .'">Remote Base URL</label><input name="'. $this->get_field_name( $whichfield .'-remote' ) .'" id="'. $this->get_field_id( $whichfield .'-remote' ) .'" class="widefat" type="text" value="'. esc_url( $instance[ $whichfield .'-remote' ] ).'"></p>';
-	}
-
-	function control_loadtime( $instance , $whichfield = 'loadtime' )
-	{
-
-		$loadtimes = apply_filters( 'wijax-loadtime' , array(
-			'onload' 	=> 'Load content immediately when page loads',
-			'onscroll' 	=> 'Wait for user to scroll page to load content',
-		));
-
-		$instance[ $whichfield ] = isset( $instance[ $whichfield ] ) ? $instance[ $whichfield ] : '';
-
-		$list = '';
-		foreach( (array) $loadtimes as $k => $v )
-			$list .= '<option value="'. $k .'" '. selected( $instance[ $whichfield ] , $k , FALSE ) .'>'. $v .'</option>';
-
-		return '<p><label for="'. $this->get_field_id( $whichfield ) .'">Loadtime</label><select name="'. $this->get_field_name( $whichfield ) .'" id="'. $this->get_field_id( $whichfield ) .'" class="widefat">'. $list . '</select><br /><small>Consider waiting to load content below the fold</small></p>';
-	}
-}// end Wijax_Widget
-
-
+} //end bCMS_Wijax
 
 class Wijax_Encode
 {
@@ -541,8 +371,17 @@ class Wijax_Encode
 	}//end out
 }//end class Channel
 
-
-function is_wijax()
+/**
+ * Singleton
+ */
+function bcms_wijax()
 {
-	return defined( 'IS_WIJAX' ) && IS_WIJAX;
-}
+	global $mywijax;
+
+	if ( ! $mywijax )
+	{
+		$mywijax = new bCMS_Wijax();
+	}//end if
+
+	return $mywijax;
+}//end bcms_wijax
