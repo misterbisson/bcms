@@ -146,7 +146,7 @@ class bSuite_Wijax
 		if( is_object( $postloops ) && ( $postloop_templates = $postloops->get_templates( 'post' )))
 		{
 			foreach( $postloop_templates as $k => $v )
-				$actions[ $this->encoded_name( 'templates-post-'. trim( $k , '.php' )) ] = (object ) array( 'key' => $k , 'type' => 'postloop');
+				$actions[ $this->encoded_name( 'templates-post-'. basename( $k , '.php' ) ) ] = (object ) array( 'key' => $k , 'type' => 'postloop');
 		}
 
 		// get the available widgets in the wijax area
