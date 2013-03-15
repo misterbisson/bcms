@@ -208,8 +208,10 @@ class bSuite_Wijax
 	{
 		global $postloops, $wp_query;
 
-		if( ( ! is_object( $postloops )) || ( ! is_single() ))
+		if ( ! is_object( $postloops ) )
+		{
 			return FALSE;
+		}
 
 		$postloop_templates = $postloops->get_templates( 'post' );
 
