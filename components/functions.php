@@ -14,4 +14,13 @@ function is_wijax()
 function bcms_widgets_init()
 {
 	register_widget( 'bCMS_PostLoop_Widget' );
+
+	register_widget( 'bSuite_Widget_CategoryDescription' );
+
+	register_widget( 'bSuite_Widget_Crumbs' );
+
+	register_widget( 'bSuite_Widget_Pagednav' );
+
+	unregister_widget('WP_Widget_Pages');
+	register_widget( 'bSuite_Widget_Pages' );
 }

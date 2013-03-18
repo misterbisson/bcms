@@ -467,17 +467,3 @@ class bSuite_Widget_Pagednav extends WP_Widget {
 		<?php
 	}
 }// end bSuite_Widget_Pagednav
-
-// register these widgets
-function bcms_widgets_init()
-{
-	register_widget( 'bSuite_Widget_CategoryDescription' );
-
-	register_widget( 'bSuite_Widget_Crumbs' );
-
-	register_widget( 'bSuite_Widget_Pagednav' );
-
-	unregister_widget('WP_Widget_Pages');
-	register_widget( 'bSuite_Widget_Pages' );
-}
-add_action('widgets_init', 'bcms_widgets_init', 1);
