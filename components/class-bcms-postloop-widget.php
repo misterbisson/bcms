@@ -49,7 +49,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			$ourposts = $wp_query;
 
 		}// end if
-		else if( preg_match( '/^predefined_/' , $instance['query'] ))
+		elseif( preg_match( '/^predefined_/' , $instance['query'] ))
 		{
 			// get the predefined query object
 			$ourposts = apply_filters( 'postloop_query_'. preg_replace( '/^predefined_/' , '' , $instance['query'] ) , FALSE );
@@ -314,12 +314,17 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			// we only check the cache for custom post loops,
 			// as the default loop is already queried and nobody wants to waste the effort
 			$cachekey = md5( serialize( $criteria ) . serialize( $instance ) . 'q' );
-			if( ! $cached = wp_cache_get( $cachekey , 'bcmspostloop' ))
+
+			if( 
+				( ! $cached = wp_cache_get( $cachekey , 'bcmspostloop' ) ) ||
+				( ! isset( $cached->time ) ) ||
+				( time() > $cached->time + $this->ttl )
+			)
 			{
 				// no cache exists, executing the query
 				$ourposts = new WP_Query( $criteria );
 
-				echo "\n<!-- postloop generated fresh on ". date(DATE_RFC822) .' -->';
+				echo "\n<!-- postloop generated fresh on ". date( DATE_RFC822 ) .' -->';
 
 				//echo '<pre>'. print_r( $ourposts , TRUE ) .'</pre>';
 
@@ -443,7 +448,9 @@ class bCMS_PostLoop_Widget extends WP_Widget
 		if( isset( $cached->html ))
 		{
 			if( isset( $cached->instance ))
+			{
 				$instance = $cached->instance;
+			}
 
 			// figure out what classes to put on the widget
 			$extra_classes = array();
@@ -457,12 +464,16 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			echo str_replace( 'class="', 'class="'. implode( ' ' , $extra_classes ) .' ' , $before_widget );
 			$title = apply_filters( 'widget_title', empty( $instance['title'] ) ? '' : $instance['title'] );
 			if ( $instance['title_show'] && $title )
+			{
 				echo $before_title . $title . $after_title .'<div class="widget_subtitle">'. $instance['subtitle'] .'</div>';
+			}
 	
 			echo $cached->html . $after_widget;
 
 			if( isset( $cachekey ))
+			{
 				wp_cache_set( $cachekey , (object) array( 'html' => $cached->html , 'template' => $cached->template , 'instance' => $instance , 'time' => time() ) , 'bcmspostloop' , $this->ttl );
+			}
 		}
 
 		unset( bcms_postloop()->current_postloop );
