@@ -305,7 +305,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			$criteria = apply_filters( 'postloop_criteria' , $criteria , $instance );
 
 			// print the post selection info for logged-in administrators
-			if( is_user_logged_in() && current_user_can( 'edit_theme_options' ))
+			if( ( ! is_wijax() ) && is_user_logged_in() && current_user_can( 'edit_theme_options' ))
 			{
 				echo "<!-- postloop criteria \n". esc_html( print_r( $criteria , TRUE )) .' -->';
 			}
@@ -329,7 +329,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 				//echo '<pre>'. print_r( $ourposts , TRUE ) .'</pre>';
 
 				// print the wp_query object for logged-in administrators
-				if( is_user_logged_in() && current_user_can( 'edit_theme_options' ))
+				if( ( ! is_wijax() ) && is_user_logged_in() && current_user_can( 'edit_theme_options' ))
 				{
 					$debug_copy = clone $ourposts;
 					unset( $debug_copy->post );
