@@ -968,13 +968,17 @@ die;
 	function control_taxonomies( $instance , $post_type )
 	{
 		if( $post_type == 'normal' )
+		{
 			return;
+		}
 
 		foreach( get_object_taxonomies( $post_type ) as $taxonomy )
 		{
 
 			if( $taxonomy == 'category' || $taxonomy == 'post_tag' )
+			{
 				continue;
+			}
 
 			$instance['tax_'. $taxonomy .'_in'] = isset( $instance['tax_'. $taxonomy .'_in'] ) ? $instance['tax_'. $taxonomy .'_in'] : array();
 			$instance['tax_'. $taxonomy .'_in_related'] = isset( $instance['tax_'. $taxonomy .'_in_related'] ) ? $instance['tax_'. $taxonomy .'_in_related'] : 0;
@@ -1014,7 +1018,9 @@ die;
 							foreach( bcms_postloop()->instances as $number => $loop )
 							{
 								if( $number == $this->number )
+								{
 									continue;
+								}
 					
 								echo '<option value="'. $number .'" '. selected( (int) $instance[ 'tax_'. $taxonomy .'_in_related' ] , (int) $number , FALSE ) .'>'. $loop['title'] .'<small> (id:'. $number .')</small></option>';
 							}
@@ -1066,7 +1072,9 @@ die;
 		foreach( bcms_postloop()->instances as $number => $instance )
 		{
 			if( $number == $this->number )
+			{
 				continue;
+			}
 
 			$list[] = '<li>
 				<label for="'. $this->get_field_id( 'relatedto-'. $number ) .'"><input type="checkbox" value="'. $number .'" '.( in_array( $number, (array) $selected ) ? 'checked="checked" class="checkbox open-on-value"' : 'class="checkbox"' ) .' id="'. $this->get_field_id( 'relatedto-'. $number) .'" name="'. $this->get_field_name( 'relatedto' ) .'['. $number .']" /> '. $instance['title'] .'<small> (id:'. $number .')</small></label>
@@ -1078,13 +1086,11 @@ die;
 	
 	function control_template_dropdown( $default = '' )
 	{
-		foreach ( bcms_postloop()->get_actions('post') as $template => $info ) :
-			if ( $default == $template )
-				$selected = " selected='selected'";
-			else
-				$selected = '';
-			echo "\n\t<option value=\"" .$template .'" '. $selected .'>'. $info['name'] .'</option>';
-		endforeach;
+		foreach ( bcms_postloop()->get_actions( 'post' ) as $template => $info )
+		{
+
+			echo "\n\t<option value=\"" .$template .'" '. selected( $default, $template, FALSE ) .'>'. $info['name'] .'</option>';
+		}
 	}
 
 	function tax_posttype_classes( $taxonomy )
