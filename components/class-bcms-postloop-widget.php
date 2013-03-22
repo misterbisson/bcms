@@ -7,13 +7,13 @@
 class bCMS_PostLoop_Widget extends WP_Widget
 {
 
-	var $ttl = 3607; // a prime number slightly longer than one hour
+	var $ttl = 307; // a prime number slightly longer than five minutes
 
 	function __construct()
 	{
 
-		$widget_ops = array('classname' => 'widget_postloop', 'description' => __( 'Build your own post loop') );
-		$this->WP_Widget('postloop', __('Post Loop'), $widget_ops);
+		$widget_ops = array('classname' => 'widget_postloop', 'description' => __( 'Build your own post loop' ) );
+		$this->WP_Widget( 'postloop', __( 'Post Loop' ), $widget_ops );
 
 		add_filter( 'wijax-actions' , array( $this , 'wjiax_actions' ) );
 	}
@@ -22,7 +22,9 @@ class bCMS_PostLoop_Widget extends WP_Widget
 	{
 		global $mywijax;
 		foreach( bcms_postloop()->instances as $k => $v )
+		{
 			$actions[ $mywijax->encoded_name( 'postloop-'. $k ) ] = (object) array( 'key' => 'postloop-'. $k , 'type' => 'widget');
+		}
 
 		return $actions;
 	}
@@ -63,7 +65,18 @@ class bCMS_PostLoop_Widget extends WP_Widget
 		{
 //			$criteria['suppress_filters'] = TRUE;
 
+			// post_type / what ('what' is for backwards compatibility) 
 			$criteria['post_type'] = array_values( array_intersect( (array) $this->get_post_types() , (array) $instance['what'] ));
+
+			// status
+			if( ! isset( $instance['status'] ) || ! is_array( $instance['status'] ) || empty( $instance['status'] ))
+			{
+				$criteria['post_status'] = array( 'publish' );
+			}
+			else
+			{
+				$criteria['post_status'] = array_keys( array_intersect_key( (array) $this->get_post_statuses() , $instance['status'] ));
+			}
 
 			if( in_array( $instance['what'], array( 'attachment', 'revision' )))
 			{
@@ -90,7 +103,8 @@ class bCMS_PostLoop_Widget extends WP_Widget
 				$criteria['category__not_in'] = array_merge( (array) $criteria['category__not_in'] , (array) array_keys( (array) bcms_postloop()->terms[ $instance['categories_not_in_related'] ]['category'] ));
 			}
 
-			if( ! empty( $instance['tags_in'] )){
+			if( ! empty( $instance['tags_in'] ))
+			{
 				$criteria['tag__'. ( in_array( $instance['tagsbool'], array( 'in', 'and', 'not_in' )) ? $instance['tagsbool'] : 'in' ) ] = $instance['tags_in'];
 			}
 
@@ -110,6 +124,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			}
 
 			$tax_query = array();
+
 
 			foreach( get_object_taxonomies( $criteria['post_type'] ) as $taxonomy )
 			{
@@ -179,9 +194,13 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			{
 				bcms_postloop()->date_before = bcms_postloop()->date_since = date( 'Y-m-d' , strtotime( $instance['age_num'] .' '. $instance['age_unit'] .' ago' ));
 				if( $instance['age_bool'] == 'older' )
+				{
 					add_filter( 'posts_where', array( bcms_postloop() , 'posts_where_date_before_once' ), 10 );
+				}
 				else
+				{
 					add_filter( 'posts_where', array( bcms_postloop() , 'posts_where_date_since_once' ), 10 );
+				}
 			}
 
 			if( isset( $_GET['wijax'] ) && absint( $_GET['paged'] ))
@@ -471,6 +490,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 
 		$instance['what'] = (array) array_intersect( (array) $this->get_post_types() , array_keys( $new_instance['what'] ));
 
+		$instance['status'] = (array) array_intersect_key( $this->get_post_statuses(), $new_instance['status'] );
 
 		$instance['categoriesbool'] = in_array( $new_instance['categoriesbool'], array( 'in', 'and', 'not_in') ) ? $new_instance['categoriesbool']: '';
 		$instance['categories_in'] = array_filter( array_map( 'absint', $new_instance['categories_in'] ));
@@ -573,7 +593,8 @@ die;
 
 		$instance = wp_parse_args( (array) $instance, 
 			array( 
-				'what' => 'normal', 
+				'what' => array( 'normal' ), 
+				'status' => array( 'publish' => __( 'Published' ) ),
 				'template' => 'a_default_full.php',
 				'title' => '',
 				'subtitle' => '',
@@ -653,6 +674,27 @@ die;
 			</div>
 		</div>
 
+		<!-- Status -->
+		<div id="<?php echo $this->get_field_id('status'); ?>-container" class="postloop container querytype_custom posttype_normal">
+			<label for="<?php echo $this->get_field_id('status'); ?>"><?php _e( 'With status' ); ?></label>
+			<div id="<?php echo $this->get_field_id('status'); ?>-contents" class="contents hide-if-js">
+				<p>
+					<ul>
+						<?php 
+						foreach( (array) $this->get_post_statuses() as $k => $v )
+						{
+						?>
+							<li><label for="<?php echo $this->get_field_id( 'status-'. $k ); ?>"><input id="<?php echo $this->get_field_id( 'status-'. $k ); ?>" name="<?php echo $this->get_field_name( 'status' ) .'['. $k .']'; ?>" type="checkbox" value="1" <?php checked( isset( $instance['status'][ $k ] ) ? $k : '' , $k ) ?>/> <?php echo $v; ?></label></li>
+						<?php
+						}
+						?>
+
+					</ul>
+				</p>
+			</div>
+		</div>
+
+		<!-- Categories -->
 		<div id="<?php echo $this->get_field_id('categories'); ?>-container" class="postloop container hide-if-js <?php echo $this->tax_posttype_classes('category'); ?>">
 			<label for="<?php echo $this->get_field_id('categoriesbool'); ?>"><?php _e( 'Categories' ); ?></label>
 			<div id="<?php echo $this->get_field_id('categories'); ?>-contents" class="contents hide-if-js">
@@ -671,6 +713,7 @@ die;
 			</div>
 		</div>
 
+		<!-- Tags -->
 		<div id="<?php echo $this->get_field_id('tags'); ?>-container" class="postloop container hide-if-js <?php echo $this->tax_posttype_classes('post_tag'); ?>">
 			<label for="<?php echo $this->get_field_id('tagsbool'); ?>"><?php _e( 'Tags' ); ?></label>
 			<div id="<?php echo $this->get_field_id('tags'); ?>-contents" class="contents hide-if-js">
@@ -742,8 +785,10 @@ die;
 			</div>
 		</div>
 
+		<!-- Other taxonomies -->
 		<?php $this->control_taxonomies( $instance , $instance['what'] ); ?>
 
+		<!-- Post IDs -->
 		<div id="<?php echo $this->get_field_id('post__in'); ?>-container" class="postloop container hide-if-js querytype_custom posttype_normal">
 			<label for="<?php echo $this->get_field_id('post__in'); ?>"><?php _e( 'Matching any post ID' ); ?></label>
 			<div id="<?php echo $this->get_field_id('post__in'); ?>-contents" class="contents hide-if-js">
@@ -919,6 +964,17 @@ die;
 		return get_post_types( array( 'public' => TRUE , 'publicly_queryable' => TRUE , ) , 'names' , 'or' ); // trivia: 'pages' are public, but not publicly queryable
 	}
 
+	function get_post_statuses()
+	{
+		$statuses = get_post_statuses();
+
+		$statuses = array_merge( $statuses, array(
+			'inherit' => 'Inherit',
+		));
+
+		return $statuses;
+	}
+
 
 
 	function control_thumbnails( $default = 'nines-thumbnail-small' )
@@ -955,7 +1011,9 @@ die;
 		foreach( bcms_postloop()->instances as $number => $loop )
 		{
 			if( $number == $this->number )
+			{
 				continue;
+			}
 
 			$related_instance_select .= '<option value="'. $number .'" '. selected( (int) $instance[ $whichfield .'_related' ] , (int) $number , FALSE ) .'>'. $loop['title'] .'<small> (id:'. $number .')</small></option>';
 		}
