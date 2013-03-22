@@ -66,67 +66,51 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			$criteria['post_type'] = array_values( array_intersect( (array) $this->get_post_types() , (array) $instance['what'] ));
 
 			if( in_array( $instance['what'], array( 'attachment', 'revision' )))
+			{
 				$criteria['post_status'] = 'inherit';
+			}
 
-			if( !empty( $instance['categories_in'] ))
+			if( ! empty( $instance['categories_in'] ))
+			{
 				$criteria['category__'. ( in_array( $instance['categoriesbool'], array( 'in', 'and', 'not_in' )) ? $instance['categoriesbool'] : 'in' ) ] = array_keys( (array) $instance['categories_in'] );
+			}
 
 			if( $instance['categories_in_related'] )
+			{
 				$criteria['category__'. ( in_array( $instance['categoriesbool'], array( 'in', 'and', 'not_in' )) ? $instance['categoriesbool'] : 'in' ) ] = array_merge( (array) $criteria['category__'. ( in_array( $instance['categoriesbool'], array( 'in', 'and', 'not_in' )) ? $instance['categoriesbool'] : 'in' ) ], (array) array_keys( (array) bcms_postloop()->terms[ $instance['categories_in_related'] ]['category'] ) );
+			}
 
-			if( !empty( $instance['categories_not_in'] ))
+			if( ! empty( $instance['categories_not_in'] ))
+			{
 				$criteria['category__not_in'] = array_keys( (array) $instance['categories_not_in'] );
+			}
 
 			if( $instance['categories_not_in_related'] )
+			{
 				$criteria['category__not_in'] = array_merge( (array) $criteria['category__not_in'] , (array) array_keys( (array) bcms_postloop()->terms[ $instance['categories_not_in_related'] ]['category'] ));
+			}
 
-			if( !empty( $instance['tags_in'] ))
+			if( ! empty( $instance['tags_in'] )){
 				$criteria['tag__'. ( in_array( $instance['tagsbool'], array( 'in', 'and', 'not_in' )) ? $instance['tagsbool'] : 'in' ) ] = $instance['tags_in'];
+			}
 
 			if( $instance['tags_in_related'] )
+			{
 				$criteria['tag__'. ( in_array( $instance['tagsbool'], array( 'in', 'and', 'not_in' )) ? $instance['tagsbool'] : 'in' ) ] = array_merge( (array) $criteria['tag__'. ( in_array( $instance['tagsbool'], array( 'in', 'and', 'not_in' )) ? $instance['tagsbool'] : 'in' ) ], (array) array_keys( (array) bcms_postloop()->terms[ $instance['tags_in_related'] ]['post_tag'] ) );
+			}
 
-			if( !empty( $instance['tags_not_in'] ))
+			if( ! empty( $instance['tags_not_in'] ))
+			{
 				$criteria['tag__not_in'] = $instance['tags_not_in'];
+			}
 
 			if( $instance['tags_not_in_related'] )
+			{
 				$criteria['tag__not_in'] = array_merge( (array) $criteria['tag__not_in'] , (array) array_keys( (array) bcms_postloop()->terms[ $instance['tags_not_in_related'] ]['post_tag'] ));
+			}
 
 			$tax_query = array();
 
-/*
-			if( $instance['tags_in_related'] )
-				$instance['tags_in'] = array_merge( 
-					(array) $instance['tags_in'] ,
-					(array) array_keys( (array) bcms_postloop()->terms['post_tag'][ $taxonomy ] )
-				);
-
-			if( count( $instance['tags_in'] ))
-			{
-				$tax_query[] = array(
-					'taxonomy' => 'post_tag',
-					'field' => 'term_id',
-					'terms' => $instance['tags_in'],
-					'operator' => strtoupper( $instance['tagsbool'] ),
-				);
-			}
-
-			if( $instance['tags_not_in_related'] )
-				$instance['tags_not_in'] = array_merge( 
-					(array) $instance['tags_not_in'] , 
-					(array) array_keys( (array) bcms_postloop()->terms['post_tag'][ $taxonomy ] )
-				);
-
-			if( count( $instance['tags_not_in'] ))
-			{
-				$tax_query[] = array(
-					'taxonomy' => 'post_tag',
-					'field' => 'term_id',
-					'terms' => $instance['tags_not_in'],
-					'operator' => 'NOT IN',
-				);
-			}
-*/
 			foreach( get_object_taxonomies( $criteria['post_type'] ) as $taxonomy )
 			{
 				if( $taxonomy == 'category' || $taxonomy == 'post_tag' )
@@ -165,13 +149,19 @@ class bCMS_PostLoop_Widget extends WP_Widget
 				}
 			}
 			if( count( $tax_query ))
+			{
 				$criteria['tax_query'] = $tax_query;
+			}
 
-			if( !empty( $instance['post__in'] ))
+			if( ! empty( $instance['post__in'] ))
+			{
 				$criteria['post__in'] = $instance['post__in'];
+			}
 	
-			if( !empty( $instance['post__not_in'] ))
+			if( ! empty( $instance['post__not_in'] ))
+			{
 				$criteria['post__not_in'] = $instance['post__not_in'];
+			}
 
 			switch( $instance['comments'] )
 			{
@@ -195,7 +185,11 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			}
 
 			if( isset( $_GET['wijax'] ) && absint( $_GET['paged'] ))
+			{
 				$criteria['paged'] = absint( $_GET['paged'] );
+				
+			}
+
 			$criteria['showposts'] = absint( $instance['count'] );
 
 			switch( $instance['order'] )
@@ -260,7 +254,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 						echo '<!-- error: related post loop is not available -->';
 				}
 			}
-			else if( 'similar' == $instance['relationship'] && count( (array) $instance['relatedto'] ))
+			elseif( 'similar' == $instance['relationship'] && count( (array) $instance['relatedto'] ))
 			{
 				if( ! class_exists( 'bSuite_bSuggestive' ) )
 				{
@@ -293,7 +287,9 @@ class bCMS_PostLoop_Widget extends WP_Widget
 
 			// print the post selection info for logged-in administrators
 			if( is_user_logged_in() && current_user_can( 'edit_theme_options' ))
+			{
 				echo "<!-- postloop criteria \n". esc_html( print_r( $criteria , TRUE )) .' -->';
+			}
 
 			// check the cache for posts
 			// we only check the cache for custom post loops,
@@ -384,7 +380,9 @@ class bCMS_PostLoop_Widget extends WP_Widget
 				// get the matching terms by taxonomy
 				$terms = get_object_term_cache( $id, (array) get_object_taxonomies( $post->post_type ) );
 				if ( empty( $terms ))
+				{
 					$terms = wp_get_object_terms( $id, (array) get_object_taxonomies( $post->post_type ) );
+				}
 
 				// get the term taxonomy IDs for the bcms_postloop() object
 				foreach( $terms as $term )
@@ -493,7 +491,9 @@ class bCMS_PostLoop_Widget extends WP_Widget
 		foreach( array_filter( array_map( 'trim', array_map( 'wp_filter_nohtml_kses', explode( ',', $new_instance['tags_not_in'] )))) as $tag_name )
 		{
 			if( $temp = is_term( $tag_name, 'post_tag' ))
+			{
 				$instance['tags_not_in'][] = $temp['term_id'];
+			}
 		}
 		$instance['tags_not_in_related'] = (int) $new_instance['tags_not_in_related'];
 
@@ -510,7 +510,9 @@ class bCMS_PostLoop_Widget extends WP_Widget
 				foreach( array_filter( array_map( 'trim', array_map( 'wp_filter_nohtml_kses', explode( ',', $new_instance['tax_'. $taxonomy .'_in'] )))) as $tag_name )
 				{
 					if( $temp = is_term( $tag_name, $taxonomy ))
+					{
 						$instance['tax_'. $taxonomy .'_in'][] = $temp['term_id'];
+					}
 				}
 
 				$instance['tax_'. $taxonomy .'_in_related'] = (int) $new_instance['tax_'. $taxonomy .'_in_related'];
@@ -520,7 +522,9 @@ class bCMS_PostLoop_Widget extends WP_Widget
 				foreach( array_filter( array_map( 'trim', array_map( 'wp_filter_nohtml_kses', explode( ',', $new_instance['tax_'. $taxonomy .'_not_in'] )))) as $tag_name )
 				{
 					if( $temp = is_term( $tag_name, $taxonomy ))
+					{
 						$instance['tax_'. $taxonomy .'_not_in'][] = $temp['term_id'];
+					}
 				}
 
 				$instance['tax_'. $taxonomy .'_not_in_related'] = (int) $new_instance['tax_'. $taxonomy .'_not_in_related'];
