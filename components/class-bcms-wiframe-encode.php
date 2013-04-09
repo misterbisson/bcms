@@ -17,6 +17,7 @@ class BCMS_Wiframe_Encode
 			document.write( unescape( '%3Cscript src="' + src + '"%3E%3C/script%3E' ) );
 		})();
 	</script>
+	<div id="bcms-wiframe-container"></div>
 	 */
 	public static function out( $function, $key )
 	{

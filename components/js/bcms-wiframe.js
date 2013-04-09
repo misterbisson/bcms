@@ -67,7 +67,7 @@ bcms.render_iframe = function() {
 	bcms.wiframes++;
 
 	var iframe = '%3Ciframe id="' + the_id + '" width="100%" height="300" scrolling="no" frameborder="0" src="' + src + '"%3E%3C/iframe%3E';
-	document.write( unescape( iframe ) );
+	jQuery('#bcms-wiframe-container').html( unescape( iframe ) );
 
 	var $frame = jQuery( '#' + the_id );
 
