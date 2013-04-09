@@ -981,6 +981,7 @@ die;
 
 		$statuses = array_merge( $statuses, array(
 			'inherit' => 'Inherit',
+			'future' => 'Future',
 		));
 
 		return $statuses;
