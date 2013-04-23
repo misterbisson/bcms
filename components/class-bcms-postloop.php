@@ -78,7 +78,7 @@ class bCMS_PostLoop
 		{
 			// get the matching post IDs for the $postloops object
 			$this->posts[-1][] = $post->ID;
-			
+
 			// get the matching terms by taxonomy
 			$terms = wp_get_object_terms( $post->ID, (array) get_object_taxonomies( $post->post_type ) );
 
@@ -96,15 +96,15 @@ class bCMS_PostLoop
 		}
 
 		// set the cache if we get here
-		wp_cache_set( 
-			$cachekey , 
-			array( 
-				'posts' => $this->posts[-1] , 
-				'terms' => $this->terms[-1] , 
+		wp_cache_set(
+			$cachekey ,
+			array(
+				'posts' => $this->posts[-1] ,
+				'terms' => $this->terms[-1] ,
 				'time' => time()
-			) , 
-			'bcmsdefaultposts' , 
-			$this->ttl 
+			) ,
+			'bcmsdefaultposts' ,
+			$this->ttl
 		);
 	}
 
@@ -113,7 +113,7 @@ class bCMS_PostLoop
 		$options = get_option( 'widget_postloop' );
 
 		// add an entry for the default conent
-		$options[-1] = array( 
+		$options[-1] = array(
 			'title' => 'The default content',
 		);
 
@@ -121,7 +121,7 @@ class bCMS_PostLoop
 		{
 			if( is_integer( $number ))
 			{
-				$option['title'] = empty( $option['title'] ) ? 'Instance #'. $number : wp_filter_nohtml_kses( $option['title'] );
+				$option['title'] = empty( $option['title'] ) ? 'Instance #'. $number : wp_kses( $option['title'], array() );
 				$this->instances[ $number ] = $option;
 			}
 		}
@@ -134,7 +134,7 @@ class bCMS_PostLoop
 		$options = get_option( 'widget_responseloop' );
 
 		// add an entry for the default conent
-		$options[-1] = array( 
+		$options[-1] = array(
 			'title' => 'The default content',
 		);
 
@@ -142,7 +142,7 @@ class bCMS_PostLoop
 		{
 			if( is_integer( $number ))
 			{
-				$option['title'] = empty( $option['title'] ) ? 'Instance #'. $number : wp_filter_nohtml_kses( $option['title'] );
+				$option['title'] = empty( $option['title'] ) ? 'Instance #'. $number : wp_kses( $option['title'], array() );
 				$this->instances_response[ md5( (string) $number . $option['template'] . $option['email'] ) ] = $option;
 			}
 		}
@@ -154,16 +154,16 @@ class bCMS_PostLoop
 	{
 		$page_templates = array();
 		$template_dir = @ dir( $template_base );
-		if ( $template_dir ) 
+		if ( $template_dir )
 		{
-			while ( ( $file = $template_dir->read() ) !== false ) 
+			while ( ( $file = $template_dir->read() ) !== false )
 			{
 				if ( preg_match('|^\.+$|', $file ))
 					continue;
-				if ( preg_match('|\.php$|', $file )) 
+				if ( preg_match('|\.php$|', $file ))
 				{
 					$template_data = implode( '', file( $template_base . $file ));
-	
+
 					$name = '';
 					if ( preg_match( '|Template Name:(.*)$|mi', $template_data, $name ))
 						$name = _cleanup_header_comment( $name[1] );
@@ -172,7 +172,7 @@ class bCMS_PostLoop
 					if ( preg_match( '|Wrapper:(.*)$|mi', $template_data )) // any value here will set it true
 						$wrapper = TRUE;
 
-					if ( !empty( $name ) ) 
+					if ( !empty( $name ) )
 					{
 						$file = basename( $file );
 						$page_templates[ $file ]['name'] = trim( $name );
@@ -187,7 +187,7 @@ class bCMS_PostLoop
 
 		return $page_templates;
 	}
-	
+
 	function get_templates( $type = 'post' )
 	{
 		$type = sanitize_file_name( $type );
@@ -197,10 +197,10 @@ class bCMS_PostLoop
 			return $this->$type_var;
 
 		$this->$type_var = array_merge
-		( 
+		(
 			(array) $this->get_templates_readdir( dirname( dirname( __FILE__ )) .'/templates-'. $type .'/' ),
-			(array) $this->get_templates_readdir( TEMPLATEPATH . '/templates-'. $type .'/' ), 
-			(array) $this->get_templates_readdir( STYLESHEETPATH . '/templates-'. $type .'/' ) 
+			(array) $this->get_templates_readdir( TEMPLATEPATH . '/templates-'. $type .'/' ),
+			(array) $this->get_templates_readdir( STYLESHEETPATH . '/templates-'. $type .'/' )
 		);
 
 		return $this->$type_var;
@@ -266,7 +266,7 @@ class bCMS_PostLoop
 
 		foreach( $templates as $template => $info )
 		{
-			$actions[ $template ] = array( 
+			$actions[ $template ] = array(
 				'name' 		=> $info['name'],
 				'callback' 	=> array( $this , 'do_template' ),
 			);

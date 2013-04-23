@@ -13,7 +13,7 @@ class bSuite_Widget_Pages extends WP_Widget {
 
 	function widget( $args, $instance ) {
 		extract( $args );
-		
+
 		if( $instance['startpage'] < 0 ||  $instance['startpage'] === 'c' )
 		{
 			if( ! is_singular() ) // can't generate a menu in this situation
@@ -41,7 +41,7 @@ class bSuite_Widget_Pages extends WP_Widget {
 		$sortby = empty( $instance['sortby'] ) ? 'menu_order' : $instance['sortby'];
 		$exclude = empty( $instance['exclude'] ) ? '' : $instance['exclude'];
 		$depth = isset( $instance['depth'] ) ? $instance['depth'] : 1;
-		
+
 		if( $instance['startpage'] < 0 )
 		{
 			// get the ancestor tree, including the current page
@@ -66,12 +66,12 @@ class bSuite_Widget_Pages extends WP_Widget {
 			$sortby = 'menu_order, post_title';
 
 		$out = wp_list_pages( array(
-				'child_of' => $startpage, 
-				'title_li' => '', 
-				'echo' => 0, 
-				'sort_column' => $sortby, 
-				'exclude' => $exclude, 
-				'depth' => $depth 
+				'child_of' => $startpage,
+				'title_li' => '',
+				'echo' => 0,
+				'sort_column' => $sortby,
+				'exclude' => $exclude,
+				'depth' => $depth
 		));
 
 		if( $instance['expandtree'] && ( $instance['startpage'] >= 0 ) && is_page() )
@@ -90,7 +90,7 @@ class bSuite_Widget_Pages extends WP_Widget {
 				}
 
 				// get any children, insert them into the tree
-				if( $children = wp_list_pages( array( 'child_of' => $post->ID, 'title_li' => '', 'echo' => 0, 'sort_column' => $sortby, 'exclude' => $exclude, 'depth' => $depth ))){		
+				if( $children = wp_list_pages( array( 'child_of' => $post->ID, 'title_li' => '', 'echo' => 0, 'sort_column' => $sortby, 'exclude' => $exclude, 'depth' => $depth ))){
 					$subtree = preg_replace( '/current_page_item[^<]*<a([^<]*)/i', 'current_page_item"><a\1<ul>'. $children .'</ul>', $subtree );
 				}
 
@@ -101,7 +101,7 @@ class bSuite_Widget_Pages extends WP_Widget {
 				}
 			}
 		}
-		
+
 		if ( !empty( $out ) ) {
 			echo $before_widget;
 			if ( $title )
@@ -137,12 +137,12 @@ class bSuite_Widget_Pages extends WP_Widget {
 
 	function form( $instance ) {
 		//Defaults
-		$instance = wp_parse_args( (array) $instance, 
-			array( 
-				'sortby' => 'post_title', 
-				'title' => '', 
-				'exclude' => '', 
-				'depth' => 1, 
+		$instance = wp_parse_args( (array) $instance,
+			array(
+				'sortby' => 'post_title',
+				'title' => '',
+				'exclude' => '',
+				'depth' => 1,
 				'startpage' => 0,
 				'expandtree' => 1,
 				'homelink' => sprintf( __('%s Home', 'Bsuite ') , get_bloginfo('name') ),
@@ -180,7 +180,7 @@ class bSuite_Widget_Pages extends WP_Widget {
 
 		<p>
 			<label for="<?php echo $this->get_field_id('startpage'); ?>"><?php _e( 'Start page hierarchy at:' ); ?></label>
-			<?php echo preg_replace( 
+			<?php echo preg_replace(
 				'#<select.*?>#i',
 
 				'<select name="'. $this->get_field_name('startpage') .'" id="'. $this->get_field_id('startpage') .'" class="widefat">
@@ -222,7 +222,7 @@ class bSuite_Widget_CategoryDescription extends WP_Widget {
 	function widget( $args, $instance ) {
 		extract( $args );
 
-		if( is_tax() || is_tag() || is_category() ) 
+		if( is_tax() || is_tag() || is_category() )
 			$category_description = term_description();
 		else
 			return;
@@ -230,10 +230,10 @@ class bSuite_Widget_CategoryDescription extends WP_Widget {
 		global $wp_query;
 		$term = $wp_query->get_queried_object();
 		$my_tag = &get_term( $term->term_id , $term->taxonomy , OBJECT , 'display' );
-		
+
 		if ( is_wp_error( $my_tag ) )
 			return false;
-		
+
 		$my_tag_name =  $my_tag->name;
 //		$my_tag_name = apply_filters( 'single_tag_title' , $my_tag->name );
 
@@ -251,16 +251,16 @@ class bSuite_Widget_CategoryDescription extends WP_Widget {
 
 	function update( $new_instance, $old_instance ) {
 		$instance = $old_instance;
-		$instance['title'] = wp_filter_nohtml_kses( $new_instance['title'] );
+		$instance['title'] = wp_kses( $new_instance['title'], array() );
 
 		return $instance;
 	}
 
 	function form( $instance ) {
 		//Defaults
-		$instance = wp_parse_args( (array) $instance, 
-			array( 
-				'title' => '%term_name% Archives', 
+		$instance = wp_parse_args( (array) $instance,
+			array(
+				'title' => '%term_name% Archives',
 			)
 		);
 
@@ -368,9 +368,9 @@ class bSuite_Widget_Crumbs extends WP_Widget {
 
 	function form( $instance ) {
 		//Defaults
-		$instance = wp_parse_args( (array) $instance, 
-			array( 
-				'title' => '', 
+		$instance = wp_parse_args( (array) $instance,
+			array(
+				'title' => '',
 				'homelink' => get_option('blogname'),
 				'maxchars' => 35,
 			)
@@ -430,7 +430,7 @@ class bSuite_Widget_Pagednav extends WP_Widget {
 				$opts['next_text'] = $instance['next_text'];
 
 			$page_links = paginate_links( $opts );
-			
+
 			if ( $page_links )
 				echo $before_widget . $page_links .'<div class="clear"></div>'. $after_widget;
 		}
