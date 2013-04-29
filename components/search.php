@@ -76,6 +76,7 @@ class bCMS_Search
 		dbDelta("
 			CREATE TABLE $this->search_table (
 				post_id bigint(20) NOT NULL,
+				post_age bigint(20) NOT NULL,
 				content text,
 				PRIMARY KEY  (post_id),
 				FULLTEXT KEY search (content)
@@ -209,7 +210,8 @@ class bCMS_Search
 				}
 
 				$insert[] = '('. 
-					(int) $post->ID .', "'. 
+					(int) $post->ID .', '. 
+					(int) date( 'YW', strtotime( $post->post_date_gmt ) ) .', "'. 
 					$this->wpdb->escape( $post->post_content ) 
 				.'")';
 			}
@@ -224,7 +226,7 @@ class bCMS_Search
 		{
 			$this->wpdb->get_results( 
 				'REPLACE INTO '. $this->search_table .'
-					(post_id, content) 
+					(post_id, post_age,  content) 
 					VALUES '. implode( ',', $insert )
 			);
 		}
@@ -297,7 +299,7 @@ window.location = "<?php echo admin_url( 'admin-ajax.php?action=bcms-search-rein
 	{
 
 		// the formula used to rank the posts
-		$this->relevancy_formula = $this->wpdb->prepare( "MATCH ( content ) AGAINST ( %s ) + MATCH ( content ) AGAINST ( %s IN BOOLEAN MODE )",
+		$this->relevancy_formula = $this->wpdb->prepare( "MATCH ( content ) AGAINST ( %s ) + MATCH ( content ) AGAINST ( %s IN BOOLEAN MODE ) + post_age ",
 			$this->search_string,
 			$this->search_string
 		);
