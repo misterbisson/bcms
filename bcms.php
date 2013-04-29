@@ -39,4 +39,5 @@ require_once( dirname( __FILE__ ) .'/components/privacy.php' );
 if( get_option( 'bcms_searchsmart' ))
 {
 	require_once( dirname( __FILE__ ) .'/components/search.php' );
+	bcms_search();
 }
