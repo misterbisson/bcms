@@ -299,7 +299,7 @@ window.location = "<?php echo admin_url( 'admin-ajax.php?action=bcms-search-rein
 	{
 
 		// the formula used to rank the posts
-		$this->relevancy_formula = $this->wpdb->prepare( "MATCH ( content ) AGAINST ( %s ) + MATCH ( content ) AGAINST ( %s IN BOOLEAN MODE ) + post_age ",
+		$this->relevancy_formula = $this->wpdb->prepare( "MATCH ( content ) AGAINST ( %s ) + ( MATCH ( content ) AGAINST ( %s IN BOOLEAN MODE ) * post_age)",
 			$this->search_string,
 			$this->search_string
 		);
