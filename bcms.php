@@ -38,6 +38,6 @@ require_once( dirname( __FILE__ ) .'/components/privacy.php' );
 // optionally include the mysql-based full text indexing
 if( get_option( 'bcms_searchsmart' ))
 {
-	require_once( dirname( __FILE__ ) .'/components/search.php' );
+	require_once( dirname( __FILE__ ) .'/components/class-bcms-search.php' );
 	bcms_search();
 }
