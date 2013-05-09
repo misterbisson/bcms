@@ -65,7 +65,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 		{
 //			$criteria['suppress_filters'] = TRUE;
 
-			// post_type / what ('what' is for backwards compatibility) 
+			// post_type / what ('what' is for backwards compatibility)
 			$criteria['post_type'] = array_values( array_intersect( (array) $this->get_post_types() , (array) $instance['what'] ));
 
 			// status
@@ -132,7 +132,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 					continue;
 
 				if( $instance['tax_'. $taxonomy .'_in_related'] )
-					$instance['tax_'. $taxonomy .'_in'] = array_merge( 
+					$instance['tax_'. $taxonomy .'_in'] = array_merge(
 						(array) $instance['tax_'. $taxonomy .'_in'] ,
 						(array) array_keys( (array) bcms_postloop()->terms[ $instance['tax_'. $taxonomy .'_in_related'] ][ $taxonomy ] )
 					);
@@ -148,8 +148,8 @@ class bCMS_PostLoop_Widget extends WP_Widget
 				}
 
 				if( $instance['tax_'. $taxonomy .'_not_in_related'] )
-					$instance['tax_'. $taxonomy .'_not_in'] = array_merge( 
-						(array) $instance['tax_'. $taxonomy .'_not_in'] , 
+					$instance['tax_'. $taxonomy .'_not_in'] = array_merge(
+						(array) $instance['tax_'. $taxonomy .'_not_in'] ,
 						(array) array_keys( (array) bcms_postloop()->terms[ $instance['tax_'. $taxonomy .'_not_in_related'] ][ $taxonomy ] )
 					);
 
@@ -172,7 +172,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			{
 				$criteria['post__in'] = $instance['post__in'];
 			}
-	
+
 			if( ! empty( $instance['post__not_in'] ))
 			{
 				$criteria['post__not_in'] = $instance['post__not_in'];
@@ -206,7 +206,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			if( isset( $_GET['wijax'] ) && absint( $_GET['paged'] ))
 			{
 				$criteria['paged'] = absint( $_GET['paged'] );
-				
+
 			}
 
 			$criteria['showposts'] = absint( $instance['count'] );
@@ -292,8 +292,8 @@ class bCMS_PostLoop_Widget extends WP_Widget
 				if( 10 > $count )
 					$count = 10;
 
-				$criteria['post__in'] = array_merge( 
-					(array) $instance['post__in'] , 
+				$criteria['post__in'] = array_merge(
+					(array) $instance['post__in'] ,
 					array_slice( (array) bSuite_bSuggestive::getposts( $posts_for_related ) , 0 , $count )
 				);
 			}
@@ -315,7 +315,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			// as the default loop is already queried and nobody wants to waste the effort
 			$cachekey = md5( serialize( $criteria ) . serialize( $instance ) . 'q' );
 
-			if( 
+			if(
 				( ! $cached = wp_cache_get( $cachekey , 'bcmspostloop' ) ) ||
 				( ! isset( $cached->time ) ) ||
 				( time() > $cached->time + $this->ttl )
@@ -335,10 +335,10 @@ class bCMS_PostLoop_Widget extends WP_Widget
 					unset( $debug_copy->post );
 					foreach( $debug_copy->posts as $k => $v )
 					{
-						$debug_copy->posts[ $k ] = (object) array( 
-							'ID' => $v->ID , 
-							'post_date' => $v->post_date , 
-							'post_title' => $v->post_title 
+						$debug_copy->posts[ $k ] = (object) array(
+							'ID' => $v->ID ,
+							'post_date' => $v->post_date ,
+							'post_title' => $v->post_title
 						);
 					}
 
@@ -378,7 +378,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			while( $ourposts->have_posts() )
 			{
 				unset( $GLOBALS['pages'] ); // to address ticket: http://core.trac.wordpress.org/ticket/12651
-				
+
 				$ourposts->the_post();
 
 				// weird feature to separate a single postloop into multiple widgets
@@ -393,7 +393,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 				{
 					continue;
 				}
-				
+
 				$offset_run ++;
 
 				global $id, $post;
@@ -421,9 +421,9 @@ class bCMS_PostLoop_Widget extends WP_Widget
 					}
 					elseif ( ! isset( bcms_postloop()->terms[ $this->number ][ $term->taxonomy ][ $term->term_id ] ) )
 					{
-						bcms_postloop()->terms[ $this->number ][ $term->taxonomy ][ $term->term_id ] = 0;	
+						bcms_postloop()->terms[ $this->number ][ $term->taxonomy ][ $term->term_id ] = 0;
 					}
-						
+
 					bcms_postloop()->terms[ $this->number ][ $term->taxonomy ][ $term->term_id ]++;
 				}
 
@@ -467,7 +467,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			{
 				echo $before_title . $title . $after_title .'<div class="widget_subtitle">'. $instance['subtitle'] .'</div>';
 			}
-	
+
 			echo $cached->html . $after_widget;
 
 			if( isset( $cachekey ))
@@ -486,8 +486,8 @@ class bCMS_PostLoop_Widget extends WP_Widget
 
 		$instance = $old_instance;
 
-		$instance['title'] = wp_filter_nohtml_kses( $new_instance['title'] );
-		$instance['subtitle'] = wp_filter_nohtml_kses( $new_instance['subtitle'] );
+		$instance['title'] = wp_kses( $new_instance['title'], array() );
+		$instance['subtitle'] = wp_kses( $new_instance['subtitle'], array() );
 		$instance['title_show'] = absint( $new_instance['title_show'] );
 
 		$allowed_queries = array( 'normal' , 'custom' );
@@ -575,7 +575,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 		$instance['relatedto'] = array_filter( (array) array_map( 'intval', (array) $new_instance['relatedto'] ));
 		$instance['count'] = absint( $new_instance['count'] );
 		$instance['order'] = in_array( $new_instance['order'], array( 'age_new', 'age_old', 'title_az', 'title_za', 'comment_new', 'comment_count', 'pop_recent', 'rand' ) ) ? $new_instance['order']: '';
-		$instance['template'] = wp_filter_nohtml_kses( $new_instance['template'] );
+		$instance['template'] = wp_kses( $new_instance['template'], array() );
 		$instance['offset_run'] = empty( $new_instance['offset_run'] ) ? '' : absint( $new_instance['offset_run'] );
 		$instance['offset_start'] = empty( $new_instance['offset_start'] ) ? '' : absint( $new_instance['offset_start'] );
 in_array( $new_instance['thumbnail_size'], (array) get_intermediate_image_sizes() ) ? $new_instance['thumbnail_size']: '';
@@ -602,9 +602,9 @@ die;
 
 		//Defaults
 
-		$instance = wp_parse_args( (array) $instance, 
-			array( 
-				'what' => array( 'normal' ), 
+		$instance = wp_parse_args( (array) $instance,
+			array(
+				'what' => array( 'normal' ),
 				'status' => array( 'publish' => __( 'Published' ) ),
 				'template' => 'a_default_full.php',
 				'title' => '',
@@ -691,7 +691,7 @@ die;
 			<div id="<?php echo $this->get_field_id('status'); ?>-contents" class="contents hide-if-js">
 				<p>
 					<ul>
-						<?php 
+						<?php
 						foreach( (array) $this->get_post_statuses() as $k => $v )
 						{
 						?>
@@ -716,7 +716,7 @@ die;
 					</select>
 					<ul><?php echo $this->control_categories( $instance , 'categories_in' ); ?></ul>
 				</p>
-		
+
 				<p>
 					<label for="<?php echo $this->get_field_id('categories_not_in'); ?>"><?php _e( 'Not in any of these categories' ); ?></label>
 					<ul><?php echo $this->control_categories( $instance , 'categories_not_in' ); ?></ul>
@@ -733,7 +733,7 @@ die;
 						<option value="in" <?php selected( $instance['tagsbool'], 'in' ); ?>><?php _e('Any of these tags'); ?></option>
 						<option value="and" <?php selected( $instance['tagsbool'], 'and' ); ?>><?php _e('All of these tags'); ?></option>
 					</select>
-		
+
 					<?php
 					$tags_in = array();
 					foreach( $instance['tags_in'] as $tag_id )
@@ -755,14 +755,14 @@ die;
 							{
 								continue;
 							}
-				
+
 							echo '<option value="'. $number .'" '. selected( (int) $instance[ 'tags_in_related' ] , (int) $number , FALSE ) .'>'. $loop['title'] .'<small> (id:'. $number .')</small></option>';
 						}
 ?>
 
 					</select></li>
 				</p>
-		
+
 				<p>
 					<label for="<?php echo $this->get_field_id('tags_not_in'); ?>"><?php _e( 'With none of these tags' ); ?></label>
 					<?php
@@ -786,7 +786,7 @@ die;
 							{
 								continue;
 							}
-				
+
 							echo '<option value="'. $number .'" '. selected( (int) $instance[ 'tags_not_in_related' ] , (int) $number , FALSE ) .'>'. $loop['title'] .'<small> (id:'. $number .')</small></option>';
 						}
 ?>
@@ -808,7 +808,7 @@ die;
 					<br />
 					<small><?php _e( 'Page IDs, separated by commas.' ); ?></small>
 				</p>
-		
+
 				<p>
 					<label for="<?php echo $this->get_field_id('post__not_in'); ?>"><?php _e( 'Excluding all these post IDs' ); ?></label> <input type="text" value="<?php echo implode( ', ', $instance['post__not_in'] ); ?>" name="<?php echo $this->get_field_name('post__not_in'); ?>" id="<?php echo $this->get_field_id('post__not_in'); ?>" class="widefat <?php if( count( $instance['post__not_in'] )) echo 'open-on-value'; ?>" />
 					<br />
@@ -871,11 +871,11 @@ die;
 			<div id="<?php echo $this->get_field_id('count'); ?>-contents" class="contents hide-if-js">
 				<p>
 					<select name="<?php echo $this->get_field_name('count'); ?>" id="<?php echo $this->get_field_id('count'); ?>" class="widefat">
-					<?php 
+					<?php
 					for( $i = 1; $i < 51; $i++ )
 					{ ?>
 						<option value="<?php echo $i; ?>" <?php selected( $instance['count'], $i ); ?>><?php echo $i; ?></option>
-					<?php 
+					<?php
 					}
 					?>
 					</select>
@@ -1031,10 +1031,10 @@ die;
 		}
 
 		$list[] = '<li>Categories from items shown in<br /><select name="'. $this->get_field_name( $whichfield .'_related' ) .'" id="'. $this->get_field_id( $whichfield .'_related' ) .'" class="widefat '. ( $instance[ $whichfield .'_related' ] ?  'open-on-value' : '' ) .'">'. $related_instance_select . '</select></li>';
-	
+
 		return implode( "\n", $list );
 	}
-	
+
 	function control_taxonomies( $instance , $post_type )
 	{
 		if( $post_type == 'normal' )
@@ -1066,7 +1066,7 @@ die;
 							<option value="in" <?php selected( $instance['tax_'. $taxonomy .'_bool'], 'in' ); ?>><?php _e('Any of these terms'); ?></option>
 							<option value="and" <?php selected( $instance['tax_'. $taxonomy .'_bool'], 'and' ); ?>><?php _e('All of these terms'); ?></option>
 						</select>
-			
+
 						<?php
 						$tags_in = array();
 						foreach( $instance['tax_'. $taxonomy .'_in'] as $tag_id )
@@ -1091,14 +1091,14 @@ die;
 								{
 									continue;
 								}
-					
+
 								echo '<option value="'. $number .'" '. selected( (int) $instance[ 'tax_'. $taxonomy .'_in_related' ] , (int) $number , FALSE ) .'>'. $loop['title'] .'<small> (id:'. $number .')</small></option>';
 							}
 ?>
-	
+
 						</select></li>
 					</p>
-		
+
 					<p>
 						<label for="<?php echo $this->get_field_id('tax_'. $taxonomy .'_not_in'); ?>"><?php _e( 'With none of these terms' ); ?></label>
 						<?php
@@ -1123,7 +1123,7 @@ die;
 							{
 								if( $number == $this->number )
 									continue;
-					
+
 								echo '<option value="'. $number .'" '. selected( (int) $instance[ 'tax_'. $taxonomy .'_not_in_related' ] , (int) $number , FALSE ) .'>'. $loop['title'] .'<small> (id:'. $number .')</small></option>';
 							}
 ?>
@@ -1135,7 +1135,7 @@ die;
 <?php
 		}
 	}
-	
+
 	function control_instances( $selected = array() )
 	{
 		$list = array();
@@ -1150,10 +1150,10 @@ die;
 				<label for="'. $this->get_field_id( 'relatedto-'. $number ) .'"><input type="checkbox" value="'. $number .'" '.( in_array( $number, (array) $selected ) ? 'checked="checked" class="checkbox open-on-value"' : 'class="checkbox"' ) .' id="'. $this->get_field_id( 'relatedto-'. $number) .'" name="'. $this->get_field_name( 'relatedto' ) .'['. $number .']" /> '. $instance['title'] .'<small> (id:'. $number .')</small></label>
 			</li>';
 		}
-	
+
 		return implode( "\n", $list );
 	}
-	
+
 	function control_template_dropdown( $default = '' )
 	{
 		foreach ( bcms_postloop()->get_actions( 'post' ) as $template => $info )
