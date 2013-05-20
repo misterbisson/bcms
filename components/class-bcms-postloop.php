@@ -153,9 +153,9 @@ class bCMS_PostLoop
 	function get_templates_readdir( $template_base )
 	{
 		$page_templates = array();
-		$template_dir = @ dir( $template_base );
-		if ( $template_dir )
+		if( file_exists( $template_base ) )
 		{
+			$template_dir = dir( $template_base );
 			while ( ( $file = $template_dir->read() ) !== false )
 			{
 				if ( preg_match('|^\.+$|', $file ))
