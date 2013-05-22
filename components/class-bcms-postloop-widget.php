@@ -513,7 +513,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 		$instance['tags_in'] = array();
 		foreach( array_filter( array_map( 'trim', array_map( 'wp_filter_nohtml_kses', explode( ',', $new_instance['tags_in'] )))) as $tag_name )
 		{
-			if( $temp = is_term( $tag_name, 'post_tag' ))
+			if( $temp = term_exists( $term, $taxonomy = '', $parent = 0 )( $tag_name, 'post_tag' ))
 				$instance['tags_in'][] = $temp['term_id'];
 		}
 		$instance['tags_in_related'] = (int) $new_instance['tags_in_related'];
@@ -521,7 +521,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 		$instance['tags_not_in'] = array();
 		foreach( array_filter( array_map( 'trim', array_map( 'wp_filter_nohtml_kses', explode( ',', $new_instance['tags_not_in'] )))) as $tag_name )
 		{
-			if( $temp = is_term( $tag_name, 'post_tag' ))
+			if( $temp = term_exists( $term, $taxonomy = '', $parent = 0 )( $tag_name, 'post_tag' ))
 			{
 				$instance['tags_not_in'][] = $temp['term_id'];
 			}
@@ -540,7 +540,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 				$instance['tax_'. $taxonomy .'_in'] = array();
 				foreach( array_filter( array_map( 'trim', array_map( 'wp_filter_nohtml_kses', explode( ',', $new_instance['tax_'. $taxonomy .'_in'] )))) as $tag_name )
 				{
-					if( $temp = is_term( $tag_name, $taxonomy ))
+					if( $temp = term_exists( $term, $taxonomy = '', $parent = 0 )( $tag_name, $taxonomy ))
 					{
 						$instance['tax_'. $taxonomy .'_in'][] = $temp['term_id'];
 					}
@@ -552,7 +552,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 				$instance['tax_'. $taxonomy .'_not_in'] = array();
 				foreach( array_filter( array_map( 'trim', array_map( 'wp_filter_nohtml_kses', explode( ',', $new_instance['tax_'. $taxonomy .'_not_in'] )))) as $tag_name )
 				{
-					if( $temp = is_term( $tag_name, $taxonomy ))
+					if( $temp = term_exists( $term, $taxonomy = '', $parent = 0 )( $tag_name, $taxonomy ))
 					{
 						$instance['tax_'. $taxonomy .'_not_in'][] = $temp['term_id'];
 					}
