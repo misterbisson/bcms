@@ -65,6 +65,9 @@ class bCMS_PostLoop_Widget extends WP_Widget
 		{
 //			$criteria['suppress_filters'] = TRUE;
 
+			// don't enumerate the entire query
+			$criteria['no_found_rows'] = TRUE;
+
 			// post_type / what ('what' is for backwards compatibility)
 			$criteria['post_type'] = array_values( array_intersect( (array) $this->get_post_types() , (array) $instance['what'] ));
 
