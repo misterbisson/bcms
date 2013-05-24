@@ -324,6 +324,10 @@ class bCMS_PostLoop_Widget extends WP_Widget
 				( time() > $cached->time + $this->ttl )
 			)
 			{
+				// add a filter that inserts a comment that allows us to track the query
+				bcms_postloop()->sql_comment = 'WP_Query defined in bCMS postloop widget: ' . $this->id;
+				add_filter( 'posts_request' , array( bcms_postloop(), 'posts_request_once' ));
+
 				// no cache exists, executing the query
 				$ourposts = new WP_Query( $criteria );
 
