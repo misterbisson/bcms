@@ -316,10 +316,10 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			// check the cache for posts
 			// we only check the cache for custom post loops,
 			// as the default loop is already queried and nobody wants to waste the effort
-			$cachekey = md5( serialize( $criteria ) . serialize( $instance ) . 'q' );
+			$this->cachekey = md5( serialize( $criteria ) . serialize( $instance ) . 'q' );
 
 			if(
-				( ! $cached = wp_cache_get( $cachekey , 'bcmspostloop' ) ) ||
+				( ! $cached = wp_cache_get( $this->cachekey , 'bcmspostloop' ) ) ||
 				( ! isset( $cached->time ) ) ||
 				( time() > $cached->time + $this->ttl )
 			)
@@ -477,7 +477,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 
 			echo $cached->html . $after_widget;
 
-			if( isset( $cachekey ))
+			if( isset( $this->cachekey ))
 			{
 				wp_cache_set( $cachekey , (object) array( 'html' => $cached->html , 'template' => $cached->template , 'instance' => $instance , 'time' => time() ) , 'bcmspostloop' , $this->ttl );
 			}
