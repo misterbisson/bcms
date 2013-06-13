@@ -246,7 +246,7 @@ class bCMS_Search
 
 		echo '<h2>bCMS Search reindex</h2><p>processed ' . $count . ' post(s) at '. date( DATE_RFC822 ) .'</p>';
 
-		if ( $reindex_limit <= $count )
+		if ( $this->reindex_limit <= $count )
 		{
 			echo '<p>Reloading...</p>';
 ?>
