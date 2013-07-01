@@ -6,19 +6,24 @@
  */
 class bCMS_PostLoop_Widget extends WP_Widget
 {
+	public $slug = 'postloop';
+	public $title = 'Post Loop';
+	public $description = 'Build your own post loop';
+	public $ttl = 307; // a prime number slightly longer than five minutes
+	public $cachekey;
 
-	var $ttl = 307; // a prime number slightly longer than five minutes
-
-	function __construct()
+	public function __construct()
 	{
-
-		$widget_ops = array('classname' => 'widget_postloop', 'description' => __( 'Build your own post loop' ) );
-		$this->WP_Widget( 'postloop', __( 'Post Loop' ), $widget_ops );
+		$widget_ops = array(
+			'classname' => 'widget_' . $this->slug,
+			'description' => __( $this->description ),
+		);
+		parent::__construct( $this->slug, __( $this->title ), $widget_ops );
 
 		add_filter( 'wijax-actions' , array( $this , 'wjiax_actions' ) );
 	}
 
-	function wjiax_actions( $actions )
+	public function wjiax_actions( $actions )
 	{
 		global $mywijax;
 		foreach( bcms_postloop()->instances as $k => $v )
@@ -29,7 +34,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 		return $actions;
 	}
 
-	function widget( $args, $instance )
+	public function widget( $args, $instance )
 	{
 		global $bsuite, $wpdb, $mywijax;
 
@@ -52,7 +57,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 		elseif( preg_match( '/^predefined_/' , $instance['query'] ))
 		{
 			// get the predefined query object
-			$ourposts = apply_filters( 'postloop_query_'. preg_replace( '/^predefined_/' , '' , $instance['query'] ) , FALSE );
+			$ourposts = apply_filters( 'postloop_query_'. preg_replace( '/^predefined_/' , '' , $instance['query'] ) , FALSE, $instance );
 
 			// check that we got something
 			if( ! $ourposts || ! is_object( $ourposts ))
@@ -253,8 +258,8 @@ class bCMS_PostLoop_Widget extends WP_Widget
 					{
 						add_filter( 'posts_join',		array( bcms_postloop() , 'posts_join_recently_popular_once' ), 10 );
 						add_filter( 'posts_orderby',	array( bcms_postloop() , 'posts_orderby_recently_popular_once' ), 10 );
-						break;
 					}
+					break;
 
 				case 'rand':
 					$criteria['orderby'] = 'rand';
@@ -484,11 +489,9 @@ class bCMS_PostLoop_Widget extends WP_Widget
 		}
 
 		unset( bcms_postloop()->current_postloop );
-
-//print_r( bcms_postloop() );
 	}
 
-	function update( $new_instance, $old_instance )
+	public function update( $new_instance, $old_instance )
 	{
 
 		$instance = $old_instance;
@@ -521,7 +524,9 @@ class bCMS_PostLoop_Widget extends WP_Widget
 		foreach( array_filter( array_map( 'trim', array_map( 'wp_filter_nohtml_kses', explode( ',', $new_instance['tags_in'] )))) as $tag_name )
 		{
 			if( $temp = term_exists( $tag_name, 'post_tag' ))
+			{
 				$instance['tags_in'][] = $temp['term_id'];
+			}
 		}
 		$instance['tags_in_related'] = (int) $new_instance['tags_in_related'];
 		$tag_name = '';
@@ -540,7 +545,9 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			foreach( get_object_taxonomies( $instance['what'] ) as $taxonomy )
 			{
 				if( $taxonomy == 'category' || $taxonomy == 'post_tag' )
+				{
 					continue;
+				}
 
 				$instance['tax_'. $taxonomy .'_bool'] = in_array( $new_instance['tax_'. $taxonomy .'_bool'], array( 'in', 'and', 'not_in') ) ? $new_instance['tax_'. $taxonomy .'_bool']: '';
 				$tag_name = '';
@@ -585,9 +592,11 @@ class bCMS_PostLoop_Widget extends WP_Widget
 		$instance['template'] = wp_kses( $new_instance['template'], array() );
 		$instance['offset_run'] = empty( $new_instance['offset_run'] ) ? '' : absint( $new_instance['offset_run'] );
 		$instance['offset_start'] = empty( $new_instance['offset_start'] ) ? '' : absint( $new_instance['offset_start'] );
-in_array( $new_instance['thumbnail_size'], (array) get_intermediate_image_sizes() ) ? $new_instance['thumbnail_size']: '';
+
 		if( function_exists( 'get_intermediate_image_sizes' ))
+		{
 			$instance['thumbnail_size'] = in_array( $new_instance['thumbnail_size'], (array) get_intermediate_image_sizes() ) ? $new_instance['thumbnail_size']: '';
+		}
 		$instance['columns'] = absint( $new_instance['columns'] );
 
 		$this->justupdated = TRUE;
@@ -600,59 +609,85 @@ die;
 		return $instance;
 	}
 
-	function form( $instance )
+	public function form( $instance )
 	{
-		global $bsuite;
-
 		// reset the instances var, in case a new widget was added
 		bcms_postloop()->get_instances();
 
 		//Defaults
+		$instance = wp_parse_args( (array) $instance, $this->get_instance_defaults() );
 
-		$instance = wp_parse_args( (array) $instance,
-			array(
-				'what' => array( 'normal' ),
-				'status' => array( 'publish' => __( 'Published' ) ),
-				'template' => 'a_default_full.php',
-				'title' => '',
-				'subtitle' => '',
-				'title_show' => FALSE,
-				'query' => '',
-				'offset_start' => 0,
-				'categoriesbool' => FALSE,
-				'tagsbool' => FALSE,
-				'tags_in' => array(),
-				'tags_in_related' => 0,
-				'tags_not_in' => array(),
-				'tags_not_in_related' => 0,
-				'post__in' => array(),
-				'post__not_in' => array(),
-				'comments' => '',
-				'age_bool' => FALSE,
-				'age_num' => '',
-				'age_unit' => 0,
-				'relatedto' => '',
-				'relationship' => 0,
-				'count' => 0,
-				'order' => 0,
-				'offset_run' => 0,
-				'offset_start' => 0,
-				'thumbnail_size' => '',
-				)
-			);
+		$this->form_title( $instance );
+		$this->form_query_type( $instance );
+		$this->form_post_type( $instance );
+		$this->form_status( $instance );
+		$this->form_categories( $instance );
+		$this->form_tags( $instance );
+		$this->form_other_taxonomies( $instance );
+		$this->form_post_ids( $instance );
+		$this->form_comments( $instance );
+		$this->form_date( $instance );
+		$this->form_related_to( $instance );
+		$this->form_count( $instance );
+		$this->form_order( $instance );
+		$this->form_template( $instance );
+		$this->form_loop_offset( $instance );
+		$this->form_multithumb( $instance );
+		$this->form_update_script( $instance );
+	}// end form
 
+	public function get_instance_defaults()
+	{
+		return array(
+			'what' => array( 'normal' ),
+			'status' => array( 'publish' => __( 'Published' ) ),
+			'template' => 'a_default_full.php',
+			'title' => '',
+			'subtitle' => '',
+			'title_show' => FALSE,
+			'query' => '',
+			'offset_start' => 0,
+			'categoriesbool' => FALSE,
+			'tagsbool' => FALSE,
+			'tags_in' => array(),
+			'tags_in_related' => 0,
+			'tags_not_in' => array(),
+			'tags_not_in_related' => 0,
+			'post__in' => array(),
+			'post__not_in' => array(),
+			'comments' => '',
+			'age_bool' => FALSE,
+			'age_num' => '',
+			'age_unit' => 0,
+			'relatedto' => '',
+			'relationship' => 0,
+			'count' => 0,
+			'order' => 0,
+			'offset_run' => 0,
+			'offset_start' => 0,
+			'thumbnail_size' => '',
+		);
+	}//end get_instance_defaults
+
+	public function form_title( $instance )
+	{
 		$title = esc_attr( $instance['title'] );
 		$subtitle = esc_attr( $instance['subtitle'] );
 		?>
 		<p>
-			<label for="<?php echo $this->get_field_id('title'); ?>"><?php _e('Title'); ?></label> <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo $title; ?>" />
+			<label for="<?php echo $this->get_field_id( 'title' ); ?>"><?php _e('Title'); ?></label> <input class="widefat" id="<?php echo $this->get_field_id('title'); ?>" name="<?php echo $this->get_field_name('title'); ?>" type="text" value="<?php echo $title; ?>" />
 			<label for="<?php echo $this->get_field_id( 'title_show' ) ?>"><input id="<?php echo $this->get_field_id( 'title_show' ) ?>" name="<?php echo $this->get_field_name( 'title_show' ) ?>" type="checkbox" value="1" <?php echo ( $instance[ 'title_show' ] ? 'checked="checked"' : '' ) ?>/> Show Title?</label>
 		</p>
 
 		<p>
-			<label for="<?php echo $this->get_field_id('subtitle'); ?>"><?php _e('Sub-title'); ?></label> <input class="widefat" id="<?php echo $this->get_field_id('subtitle'); ?>" name="<?php echo $this->get_field_name('subtitle'); ?>" type="text" value="<?php echo $subtitle; ?>" />
+			<label for="<?php echo $this->get_field_id( 'subtitle' ); ?>"><?php _e('Sub-title'); ?></label> <input class="widefat" id="<?php echo $this->get_field_id('subtitle'); ?>" name="<?php echo $this->get_field_name('subtitle'); ?>" type="text" value="<?php echo $subtitle; ?>" />
 		</p>
+		<?php
+	}//end form_title
 
+	public function form_query_type( $instance )
+	{
+		?>
 		<!-- Query type -->
 		<div id="<?php echo $this->get_field_id('query'); ?>-container" class="postloop container querytype_normal posttype_normal">
 			<label for="<?php echo $this->get_field_id('query'); ?>"><?php _e( 'What to show' ); ?></label>
@@ -676,7 +711,12 @@ die;
 				</p>
 			</div>
 		</div>
+		<?php
+	}//end form_query_type
 
+	public function form_post_type( $instance )
+	{
+		?>
 		<!-- Post type -->
 		<div id="<?php echo $this->get_field_id('what'); ?>-container" class="postloop container querytype_custom posttype_normal">
 			<label for="<?php echo $this->get_field_id('what'); ?>"><?php _e( 'Selecting what kind of content' ); ?></label>
@@ -691,7 +731,12 @@ die;
 				</p>
 			</div>
 		</div>
+		<?php
+	}//end form_post_type
 
+	public function form_status( $instance )
+	{
+		?>
 		<!-- Status -->
 		<div id="<?php echo $this->get_field_id('status'); ?>-container" class="postloop container querytype_custom posttype_normal">
 			<label for="<?php echo $this->get_field_id('status'); ?>"><?php _e( 'With status' ); ?></label>
@@ -711,7 +756,12 @@ die;
 				</p>
 			</div>
 		</div>
+		<?php
+	}//end form_status
 
+	public function form_categories( $instance )
+	{
+		?>
 		<!-- Categories -->
 		<div id="<?php echo $this->get_field_id('categories'); ?>-container" class="postloop container hide-if-js <?php echo $this->tax_posttype_classes('category'); ?>">
 			<label for="<?php echo $this->get_field_id('categoriesbool'); ?>"><?php _e( 'Categories' ); ?></label>
@@ -730,7 +780,12 @@ die;
 				</p>
 			</div>
 		</div>
+		<?php
+	}//end form_categories
 
+	public function form_tags( $instance )
+	{
+		?>
 		<!-- Tags -->
 		<div id="<?php echo $this->get_field_id('tags'); ?>-container" class="postloop container hide-if-js <?php echo $this->tax_posttype_classes('post_tag'); ?>">
 			<label for="<?php echo $this->get_field_id('tagsbool'); ?>"><?php _e( 'Tags' ); ?></label>
@@ -755,7 +810,7 @@ die;
 
 					<br />And terms from<br /><select name="<?php echo $this->get_field_name( 'tags_in_related' ); ?>" id="<?php echo $this->get_field_id( 'tags_in_related' ); ?>" class="widefat <?php if( $instance[ 'tags_in_related' ] ) echo 'open-on-value'; ?>">
 						<option value="0" '. <?php selected( (int) $instance[ 'tags_in_related' ] , 0 ) ?> .'></option>
-<?php
+						<?php
 						foreach( bcms_postloop()->instances as $number => $loop )
 						{
 							if( $number == $this->number )
@@ -765,8 +820,7 @@ die;
 
 							echo '<option value="'. $number .'" '. selected( (int) $instance[ 'tags_in_related' ] , (int) $number , FALSE ) .'>'. $loop['title'] .'<small> (id:'. $number .')</small></option>';
 						}
-?>
-
+						?>
 					</select></li>
 				</p>
 
@@ -786,7 +840,7 @@ die;
 
 					<br />And terms from<br /><select name="<?php echo $this->get_field_name( 'tags_not_in_related' ); ?>" id="<?php echo $this->get_field_id( 'tags_not_in_related' ); ?>" class="widefat <?php if ( $instance['tags_not_in_related' ] ) echo 'open-on-value'; ?>">
 						<option value="0" '. <?php selected( $instance['tags_not_in_related'], 0 ); ?> .'></option>
-<?php
+						<?php
 						foreach( bcms_postloop()->instances as $number => $loop )
 						{
 							if( $number == $this->number )
@@ -796,16 +850,23 @@ die;
 
 							echo '<option value="'. $number .'" '. selected( (int) $instance[ 'tags_not_in_related' ] , (int) $number , FALSE ) .'>'. $loop['title'] .'<small> (id:'. $number .')</small></option>';
 						}
-?>
-
+						?>
 					</select></li>
 				</p>
 			</div>
 		</div>
+		<?php
+	}//end form_tags
 
-		<!-- Other taxonomies -->
-		<?php $this->control_taxonomies( $instance , $instance['what'] ); ?>
+	public function form_other_taxonomies( $instance )
+	{
+		// Other taxonomies -->
+		$this->control_taxonomies( $instance , $instance['what'] );
+	}//end form_other_taxonomies
 
+	public function form_post_ids( $instance )
+	{
+		?>
 		<!-- Post IDs -->
 		<div id="<?php echo $this->get_field_id('post__in'); ?>-container" class="postloop container hide-if-js querytype_custom posttype_normal">
 			<label for="<?php echo $this->get_field_id('post__in'); ?>"><?php _e( 'Matching any post ID' ); ?></label>
@@ -823,7 +884,12 @@ die;
 				</p>
 			</div>
 		</div>
+		<?php
+	}//end form_post_ids
 
+	public function form_comments( $instance )
+	{
+		?>
 		<div id="<?php echo $this->get_field_id('comments'); ?>-container" class="postloop container hide-if-js querytype_custom posttype_normal">
 			<label for="<?php echo $this->get_field_id('comments'); ?>"><?php _e( 'Comments' ); ?></label>
 			<div id="<?php echo $this->get_field_id('comments'); ?>-contents" class="contents hide-if-js">
@@ -836,7 +902,12 @@ die;
 				</p>
 			</div>
 		</div>
+		<?php
+	}//end form_comments
 
+	public function form_date( $instance )
+	{
+		?>
 		<div id="<?php echo $this->get_field_id('age'); ?>-container" class="postloop container hide-if-js querytype_custom posttype_normal">
 			<label for="<?php echo $this->get_field_id('age_num'); ?>"><?php _e('Date published'); ?></label>
 			<div id="<?php echo $this->get_field_id('age'); ?>-contents" class="contents hide-if-js">
@@ -854,7 +925,12 @@ die;
 				</p>
 			</div>
 		</div>
+		<?php
+	}//end form_date
 
+	public function form_related_to( $instance )
+	{
+		?>
 		<?php if( $other_instances = $this->control_instances( $instance['relatedto'] )): ?>
 			<div id="<?php echo $this->get_field_id('relationship'); ?>-container" class="postloop container hide-if-js querytype_custom posttype_normal">
 				<label for="<?php echo $this->get_field_id('relationship'); ?>"><?php _e('Related to other posts'); ?></label>
@@ -872,7 +948,12 @@ die;
 				</div>
 			</div>
 		<?php endif; ?>
+		<?php
+	}//end form_related_to
 
+	public function form_count( $instance )
+	{
+		?>
 		<div id="<?php echo $this->get_field_id('count'); ?>-container" class="postloop container hide-if-js querytype_custom posttype_normal">
 			<label for="<?php echo $this->get_field_id('count'); ?>"><?php _e( 'Number of items to show' ); ?></label>
 			<div id="<?php echo $this->get_field_id('count'); ?>-contents" class="contents hide-if-js">
@@ -889,7 +970,13 @@ die;
 				</p>
 			</div>
 		</div>
+		<?php
+	}//end form_count
 
+	public function form_order( $instance )
+	{
+		global $bsuite;
+		?>
 		<div id="<?php echo $this->get_field_id('order'); ?>-container" class="postloop container hide-if-js querytype_custom posttype_normal">
 			<label for="<?php echo $this->get_field_id('order'); ?>"><?php _e( 'Ordered by' ); ?></label>
 			<div id="<?php echo $this->get_field_id('order'); ?>-contents" class="contents hide-if-js">
@@ -909,7 +996,12 @@ die;
 				</p>
 			</div>
 		</div>
+		<?php
+	}//end form_order
 
+	public function form_template( $instance )
+	{
+		?>
 		<div id="<?php echo $this->get_field_id('template'); ?>-container" class="postloop container querytype_normal posttype_normal">
 			<label for="<?php echo $this->get_field_id('template'); ?>"><?php _e( 'Template' ); ?></label>
 			<div id="<?php echo $this->get_field_id('template'); ?>-contents" class="contents hide-if-js">
@@ -920,8 +1012,11 @@ die;
 				</p>
 			</div>
 		</div>
-
 		<?php
+	}//end form_template
+
+	public function form_loop_offset( $instance )
+	{
 		// weird feature to separate a single postloop into multiple widgets
 		?>
 		<div id="<?php echo $this->get_field_id('offset'); ?>-container" class="postloop container querytype_normal posttype_normal">
@@ -947,10 +1042,14 @@ die;
 				</p>
 			</div>
 		</div>
-<?php
+		<?php
+	}//end form_loop_offset
+
+	public function form_multithumb( $instance )
+	{
 		if( function_exists( 'get_intermediate_image_sizes' ))
 		{
-?>
+			?>
 			<div id="<?php echo $this->get_field_id('thumbnail_size'); ?>-container" class="postloop container querytype_normal posttype_normal">
 				<label for="<?php echo $this->get_field_id('thumbnail_size'); ?>"><?php _e( 'Thumbnail Size' ); ?></label>
 				<div id="<?php echo $this->get_field_id('thumbnail_size'); ?>-contents" class="contents hide-if-js">
@@ -961,28 +1060,28 @@ die;
 					</p>
 				</div>
 			</div>
-<?php
-		}
+			<?php
+		}//end if
+	}//end form_query_type
 
+	public function form_update_script( $instance )
+	{
 		if ( isset( $this->justupdated ) && $this->justupdated )
 		{
 ?>
 <script type="text/javascript">
 	postloops_widgeteditor_update( '<?php echo $this->get_field_id('title'); ?>' );
 </script>
-
 <?php
 		}
-	}
+	}//end form_query_type
 
-
-
-	function get_post_types()
+	public function get_post_types()
 	{
 		return get_post_types( array( 'public' => TRUE , 'publicly_queryable' => TRUE , ) , 'names' , 'or' ); // trivia: 'pages' are public, but not publicly queryable
 	}
 
-	function get_post_statuses()
+	public function get_post_statuses()
 	{
 		$statuses = get_post_statuses();
 
@@ -995,8 +1094,7 @@ die;
 	}
 
 
-
-	function control_thumbnails( $default = 'nines-thumbnail-small' )
+	public function control_thumbnails( $default = 'nines-thumbnail-small' )
 	{
 		if( ! function_exists( 'get_intermediate_image_sizes' ))
 			return;
@@ -1010,7 +1108,7 @@ die;
 		endforeach;
 	}
 
-	function control_categories( $instance , $whichfield = 'categories_in' )
+	public function control_categories( $instance , $whichfield = 'categories_in' )
 	{
 
 		// get the regular category list
@@ -1042,7 +1140,7 @@ die;
 		return implode( "\n", $list );
 	}
 
-	function control_taxonomies( $instance , $post_type )
+	public function control_taxonomies( $instance , $post_type )
 	{
 		if( $post_type == 'normal' )
 		{
@@ -1143,7 +1241,7 @@ die;
 		}
 	}
 
-	function control_instances( $selected = array() )
+	public function control_instances( $selected = array() )
 	{
 		$list = array();
 		foreach( bcms_postloop()->instances as $number => $instance )
@@ -1161,7 +1259,7 @@ die;
 		return implode( "\n", $list );
 	}
 
-	function control_template_dropdown( $default = '' )
+	public function control_template_dropdown( $default = '' )
 	{
 		foreach ( bcms_postloop()->get_actions( 'post' ) as $template => $info )
 		{
@@ -1170,7 +1268,7 @@ die;
 		}
 	}
 
-	function tax_posttype_classes( $taxonomy )
+	public function tax_posttype_classes( $taxonomy )
 	{
 		$tax = get_taxonomy($taxonomy);
 
