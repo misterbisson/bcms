@@ -593,7 +593,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 		$instance['relationship'] = in_array( $new_instance['relationship'], array( 'similar', 'excluding') ) ? $new_instance['relationship']: '';
 		$instance['relatedto'] = array_filter( (array) array_map( 'intval', (array) $new_instance['relatedto'] ));
 		$instance['count'] = absint( $new_instance['count'] );
-		$instance['order'] = in_array( $new_instance['order'], array( 'age_new', 'age_old', 'title_az', 'title_za', 'comment_new', 'comment_count', 'pop_recent', 'rand' ) ) ? $new_instance['order']: '';
+		$instance['order'] = in_array( $new_instance['order'], array( 'age_new', 'age_old', 'title_az', 'title_za', 'comment_new', 'comment_count', 'pop_recent', 'rand', 'menu_order' ) ) ? $new_instance['order']: '';
 		$instance['template'] = wp_kses( $new_instance['template'], array() );
 		$instance['offset_run'] = empty( $new_instance['offset_run'] ) ? '' : absint( $new_instance['offset_run'] );
 		$instance['offset_start'] = empty( $new_instance['offset_start'] ) ? '' : absint( $new_instance['offset_start'] );
