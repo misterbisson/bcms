@@ -265,6 +265,11 @@ class bCMS_PostLoop_Widget extends WP_Widget
 					$criteria['orderby'] = 'rand';
 					break;
 
+				case 'menu_order':
+					$criteria['orderby'] = 'menu_order';
+					$criteria['order'] = 'ASC';
+					break;
+
 				default:
 					$criteria['orderby'] = 'post_date';
 					$criteria['order'] = 'DESC';
@@ -991,6 +996,7 @@ die;
 							<?php if( is_object( $bsuite )): ?>
 								<option value="pop_recent" <?php selected( $instance['order'], 'pop_recent' ); ?>><?php _e('Recently Popular'); ?></option>
 							<?php endif; ?>
+							<option value="menu_order" <?php selected( $instance['order'], 'menu_order' ); ?>><?php _e('Page Order'); ?></option>
 							<option value="rand" <?php selected( $instance['order'], 'rand' ); ?>><?php _e('Random'); ?></option>
 					</select>
 				</p>
