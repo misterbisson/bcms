@@ -202,6 +202,8 @@ class bCMS_PostLoop
 			(array) $this->get_templates_readdir( STYLESHEETPATH . '/templates-'. $type .'/' )
 		);
 
+		$this->$type_var = apply_filters( 'bcms_postloop_templates', $this->$type_var );
+
 		return $this->$type_var;
 	}
 
