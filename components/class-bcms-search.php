@@ -8,7 +8,7 @@ class bCMS_Search
 
 	function __construct()
 	{
-		add_action( 'init' , array( $this , 'init' ));
+		add_action( 'init' , array( $this , 'init' ) );
 	}
 
 	function init()
@@ -18,22 +18,31 @@ class bCMS_Search
 		$this->search_table = $wpdb->prefix . 'bcms_search';
 
 		// delete posts from the search index when saving them
-		add_filter( 'save_post' , array( $this , 'delete_index_for_post' ));
+		add_filter( 'save_post' , array( $this , 'delete_index_for_post' ) );
 
 		// update the search index via cron
 		add_action( 'hourly' , array( $this, 'reindex_passive' ) );
 
+		// attach ajax and upgrade actions in the admin context
 		if ( is_admin() )
 		{
 			$this->upgrade();
-			add_action( 'wp_ajax_bcms-search-reindex', array( $this, 'reindex_ajax' ));
-			add_action( 'wp_ajax_bcms-search-reset', array( $this, 'reset_ajax' ));
+			add_action( 'wp_ajax_bcms-search-reindex', array( $this, 'reindex_ajax' ) );
+			add_action( 'wp_ajax_bcms-search-reset', array( $this, 'reset_ajax' ) );
 		}
-		else
+
+		// only attach query filters in the public context
+		elseif ( ! function_exists( 'go_sphinx' ) )
 		{
 			// attach an action to apply filters to queries, except from the dashboard
 			add_action( 'parse_query' , array( $this , 'parse_query' ) , 1 );
 		}
+
+		/*
+		 * The above conditional is specifically aware of the go-sphinx plugin
+		 * because its keyword indexing is better, but that
+		 * plugin also has a small dependency on bCMS.
+		 */
 
 	}
 
@@ -42,7 +51,7 @@ class bCMS_Search
 		$options = get_option( 'bcms_search_options' );
 
 		// initial activation and default options
-		if( ! isset( $options['version'] ) )
+		if ( ! isset( $options['version'] ) )
 		{
 			// create the table
 			$this->reset_table();
@@ -59,13 +68,13 @@ class bCMS_Search
 	function create_table()
 	{
 		$charset_collate = '';
-		if ( version_compare( mysql_get_server_info() , '4.1.0', '>=' ))
+		if ( version_compare( mysql_get_server_info() , '4.1.0', '>=' ) )
 		{
-			if ( ! empty( $this->wpdb->charset ))
+			if ( ! empty( $this->wpdb->charset ) )
 			{
 				$charset_collate = 'DEFAULT CHARACTER SET '. $this->wpdb->charset;
 			}
-			if ( ! empty( $this->wpdb->collate ))
+			if ( ! empty( $this->wpdb->collate ) )
 			{
 				$charset_collate .= ' COLLATE '. $this->wpdb->collate;
 			}
@@ -99,11 +108,11 @@ class bCMS_Search
 		}
 
 		// get and clean the search string
-		$this->search_string = trim( get_search_query());
+		$this->search_string = trim( get_search_query() );
 
 		// only works for search strings longer than MySQL's ft min word length
 		// @TODO: make this configurable
-		if ( 4 > strlen( $this->search_string ))
+		if ( 4 > strlen( $this->search_string ) )
 		{
 			return $query;
 		}
@@ -133,12 +142,12 @@ class bCMS_Search
 		// get the post via WP
 		$post = get_post( $post_id );
 
-		// keyword stuff the title at the top 
+		// keyword stuff the title at the top
 		$content = $post->post_title ."\n". $post->post_content;
 
 		// get terms in all post taxonomies and add them to the content as well
 		$taxonomies = get_object_taxonomies( $post->post_type, 'names' );
-		$tags = wp_get_object_terms( 
+		$tags = wp_get_object_terms(
 			$post_id,
 			$taxonomies,
 			array(
@@ -150,7 +159,7 @@ class bCMS_Search
 		$content .= "\n". implode( ' ', $tags );
 
 		// simple cleaning
-		$content = stripslashes( html_entity_decode( $content ));
+		$content = stripslashes( html_entity_decode( $content ) );
 
 		// replace some html with newlines to prevent irrelevant proximity results
 		$content = preg_replace( '/\<\/?(p|br|li|h[1-9])[^\>]*\>/i' , "\n" , $content );
@@ -165,7 +174,7 @@ class bCMS_Search
 		$content = apply_filters( 'bcms_search_post_content' , $content , $post_id );
 
 		// find words with accented characters, create transliterated versions of them
-		$unaccented = array_diff( str_word_count( $content , 1 ), str_word_count( remove_accents( $content ) , 1 ));
+		$unaccented = array_diff( str_word_count( $content , 1 ), str_word_count( remove_accents( $content ) , 1 ) );
 		$content .= "\n". implode( ' ', $unaccented );
 
 		// metaphone all the words and add those to the content to help sloppy spellers
@@ -192,7 +201,7 @@ class bCMS_Search
 		);
 
 		// get the filtered content and construct an insert statement for each
-		if( count( $posts ))
+		if ( count( $posts ) )
 		{
 			$insert = array();
 
@@ -201,18 +210,18 @@ class bCMS_Search
 
 				$post = $this->get_post( $post_id );
 
-				if ( 
-					empty( $post->ID ) || 
-					empty( $post->post_content ) 
+				if (
+					empty( $post->ID ) ||
+					empty( $post->post_content )
 				)
 				{
 					continue;
 				}
 
-				$insert[] = '('. 
-					(int) $post->ID .', '. 
-					(int) date( 'YW', strtotime( $post->post_date_gmt ) ) .', "'. 
-					$this->wpdb->escape( $post->post_content ) 
+				$insert[] = '('.
+					(int) $post->ID .', '.
+					(int) date( 'YW', strtotime( $post->post_date_gmt ) ) .', "'.
+					$this->wpdb->escape( $post->post_content )
 				.'")';
 			}
 		}
@@ -224,9 +233,9 @@ class bCMS_Search
 		// insert into the search table
 		if ( count( $insert ) )
 		{
-			$this->wpdb->get_results( 
+			$this->wpdb->get_results(
 				'REPLACE INTO '. $this->search_table .'
-					(post_id, post_age,  content) 
+					(post_id, post_age,  content)
 					VALUES '. implode( ',', $insert )
 			);
 		}
@@ -246,7 +255,7 @@ class bCMS_Search
 		{
 			return FALSE;
 		}
-		
+
 		$count = $this->reindex();
 
 		echo '<h2>bCMS Search reindex</h2><p>processed ' . $count . ' post(s) at '. date( DATE_RFC822 ) .'</p>';
@@ -273,7 +282,7 @@ window.location = "<?php echo admin_url( 'admin-ajax.php?action=bcms-search-rein
 		{
 			return FALSE;
 		}
-		
+
 		$this->reset_table();
 
 		echo '<h2>bCMS Search index reset</h2><p>Action completed at '. date( DATE_RFC822 ) .'</p>';
@@ -289,7 +298,7 @@ window.location = "<?php echo admin_url( 'admin-ajax.php?action=bcms-search-rein
 		{
 			$metaphone = metaphone( $word, 5 );
 
-			// MySQL's minimum word length is usually 4 chars, 
+			// MySQL's minimum word length is usually 4 chars,
 			// so we double the metaphone so short phonemes are longer
 			// ...we also exclude duplicates
 //			$metaphones[ $metaphone ] = $metaphone . $metaphone;
@@ -318,7 +327,7 @@ window.location = "<?php echo admin_url( 'admin-ajax.php?action=bcms-search-rein
 		$this->posts_join = $this->wpdb->prepare( " INNER JOIN (
 			SELECT post_id, ( $this->relevancy_formula ) AS ftscore
 			FROM $this->search_table
-			WHERE ( MATCH ( content ) AGAINST ( %s $boolean ))
+			WHERE ( MATCH ( content ) AGAINST ( %s $boolean ) )
 			ORDER BY ftscore DESC
 			LIMIT 0, 1250
 		) bcms_search ON ( bcms_search.post_id = ". $this->wpdb->posts .".ID )",
@@ -347,7 +356,7 @@ function bcms_search()
 {
 	global $bcms_search;
 
-	if( ! $bcms_search )
+	if ( ! $bcms_search )
 	{
 		$bcms_search = new bCMS_Search;
 	}
