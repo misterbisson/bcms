@@ -5,6 +5,7 @@ class bCMS_Search
 
 	public $version = 1;
 	public $reindex_limit = 25;
+	public $cron_action = 'bcms_search_reindex';
 
 	function __construct()
 	{
@@ -21,7 +22,7 @@ class bCMS_Search
 		add_filter( 'save_post' , array( $this , 'delete_index_for_post' ) );
 
 		// update the search index via cron
-		add_action( 'hourly' , array( $this, 'reindex_passive' ) );
+		add_action( 'bcms_search_reindex' , array( $this, 'reindex_passive' ) );
 
 		// attach ajax and upgrade actions in the admin context
 		if ( is_admin() )
@@ -55,6 +56,9 @@ class bCMS_Search
 		{
 			// create the table
 			$this->reset_table();
+
+			// register the cron
+			$this->reset_cron();
 
 			// set the options
 			$options['active'] = TRUE;
@@ -95,8 +99,17 @@ class bCMS_Search
 
 	function reset_table()
 	{
+		// create the table, if necessary
 		$this->create_table();
+
+		// empty the table
 		$this->wpdb->get_results( 'TRUNCATE TABLE '. $this->search_table );
+	}
+
+	public function reset_cron()
+	{
+		wp_clear_scheduled_hook( $this->cron_action );
+		wp_schedule_event( time(), 'hourly', $this->cron_action );
 	}
 
 	function parse_query( $query )
@@ -283,11 +296,16 @@ window.location = "<?php echo admin_url( 'admin-ajax.php?action=bcms-search-rein
 			return FALSE;
 		}
 
+		// reset the search table
 		$this->reset_table();
 
-		echo '<h2>bCMS Search index reset</h2><p>Action completed at '. date( DATE_RFC822 ) .'</p>';
+		echo '<h2>bCMS Search index reset</h2><p>Action completed at '. date( DATE_RFC2822 ) .'</p>';
 
-		echo '<p><a href="'. admin_url( 'admin-ajax.php?action=bcms-search-reindex' ) .'">Start reindexing</a></p>';
+		// reset the cron
+		$this->reset_cron();
+		echo '<p>Next indexing cron event should run on '. date( DATE_RFC2822, wp_next_scheduled( $this->cron_action ) ) . '</p>';
+
+		echo '<p><a href="'. admin_url( 'admin-ajax.php?action=bcms-search-reindex' ) .'">Start reindexing manually</a></p>';
 
 		die;
 	}
