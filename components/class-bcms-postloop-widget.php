@@ -423,6 +423,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 				// get the matching post IDs for the bcms_postloop() object
 				bcms_postloop()->posts[ $this->number ][] = $id;
 
+				// get the matching terms by taxonomy
 				$terms = wp_get_object_terms( $id, (array) get_object_taxonomies( $post->post_type ) );
 
 				// get the term taxonomy IDs for the bcms_postloop() object
