@@ -38,7 +38,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 	{
 		global $bsuite, $wpdb, $mywijax;
 
-		$cached = (object) array();
+		$cached = new stdClass();
 
 		$this->wijax_varname = $mywijax->encoded_name( $this->id );
 
@@ -334,6 +334,11 @@ class bCMS_PostLoop_Widget extends WP_Widget
 				( time() > $cached->time + $this->ttl )
 			)
 			{
+				if ( ! $cached )
+				{
+					$cached = new stdClass();
+				}// end if
+
 				// add a filter that inserts a comment that allows us to track the query
 				bcms_postloop()->sql_comment = 'WP_Query defined in bCMS postloop widget: ' . $this->id;
 				add_filter( 'posts_request' , array( bcms_postloop(), 'posts_request_once' ));
@@ -489,7 +494,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 
 			if( isset( $this->cachekey ))
 			{
-				wp_cache_set( $cachekey , (object) array( 'html' => $cached->html , 'template' => $cached->template , 'instance' => $instance , 'time' => time() ) , 'bcmspostloop' , $this->ttl );
+				wp_cache_set( $this->cachekey , (object) array( 'html' => $cached->html , 'template' => $cached->template , 'instance' => $instance , 'time' => time() ) , 'bcmspostloop' , $this->ttl );
 			}
 		}
 
