@@ -10,7 +10,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 	public $title = 'Post Loop';
 	public $description = 'Build your own post loop';
 	public $ttl = 307; // a prime number slightly longer than five minutes
-	public $cachekey;
+	public $use_cache = TRUE;
 
 	public function __construct()
 	{
@@ -215,7 +215,6 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			if( isset( $_GET['wijax'] ) && absint( $_GET['paged'] ))
 			{
 				$criteria['paged'] = absint( $_GET['paged'] );
-
 			}
 
 			$criteria['showposts'] = absint( $instance['count'] );
@@ -327,10 +326,11 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			// check the cache for posts
 			// we only check the cache for custom post loops,
 			// as the default loop is already queried and nobody wants to waste the effort
-			$this->cachekey = md5( serialize( $criteria ) . serialize( $instance ) . 'q' );
+			$cachekey = md5( serialize( $criteria ) . serialize( $instance ) . 'q' );
+			$cached = $this->use_cache ? wp_cache_get( $cachekey, 'bcmspostloop' ) : FALSE;
 
 			if(
-				( ! $cached = wp_cache_get( $this->cachekey , 'bcmspostloop' ) ) ||
+				! $cached ||
 				( ! isset( $cached->time ) ) ||
 				( time() > $cached->time + $this->ttl )
 			)
@@ -372,12 +372,10 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			{
 				echo '<!-- postloop fetched from cache, generated on '. date( DATE_RFC822 , $cached->time ) .' -->';
 			}
-
 		}
 
 		if( ! isset( $cached->html ) && $ourposts->have_posts() )
 		{
-
 			// get the templates, thumbnail size, and other stuff
 			$this->post_templates = (array) bcms_postloop()->get_templates('post');
 			$cached->template = $this->post_templates[ $instance['template'] ];
@@ -478,7 +476,6 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			$instance['extra_classes'] = isset( $instance['extra_classes'] ) ? (array) $instance['extra_classes'] : array();
 			$extra_classes = array_merge( $extra_classes , $instance['extra_classes'] );
 
-
 			// output the widget
 			echo str_replace( 'class="', 'class="'. implode( ' ' , $extra_classes ) .' ' , $before_widget );
 			$title = apply_filters( 'widget_title', empty( $instance['title'] ) ? '' : $instance['title'] );
@@ -489,9 +486,9 @@ class bCMS_PostLoop_Widget extends WP_Widget
 
 			echo $cached->html . $after_widget;
 
-			if( isset( $this->cachekey ))
+			if ( isset( $cachekey ) && $this->use_cache )
 			{
-				wp_cache_set( $this->cachekey , (object) array( 'html' => $cached->html , 'template' => $cached->template , 'instance' => $instance , 'time' => time() ) , 'bcmspostloop' , $this->ttl );
+				wp_cache_set( $cachekey , (object) array( 'html' => $cached->html , 'template' => $cached->template , 'instance' => $instance , 'time' => time() ) , 'bcmspostloop' , $this->ttl );
 			}
 		}
 
