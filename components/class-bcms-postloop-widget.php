@@ -10,7 +10,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 	public $title = 'Post Loop';
 	public $description = 'Build your own post loop';
 	public $ttl = 307; // a prime number slightly longer than five minutes
-	public $cachekey;
+	public $use_cache = TRUE;
 
 	public function __construct()
 	{
@@ -171,6 +171,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 					);
 				}
 			}
+
 			if( count( $tax_query ))
 			{
 				$criteria['tax_query'] = $tax_query;
@@ -214,7 +215,6 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			if( isset( $_GET['wijax'] ) && absint( $_GET['paged'] ))
 			{
 				$criteria['paged'] = absint( $_GET['paged'] );
-
 			}
 
 			$criteria['showposts'] = absint( $instance['count'] );
@@ -326,10 +326,11 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			// check the cache for posts
 			// we only check the cache for custom post loops,
 			// as the default loop is already queried and nobody wants to waste the effort
-			$this->cachekey = md5( serialize( $criteria ) . serialize( $instance ) . 'q' );
+			$cachekey = md5( serialize( $criteria ) . serialize( $instance ) . 'q' );
+			$cached = $this->use_cache ? wp_cache_get( $cachekey, 'bcmspostloop' ) : FALSE;
 
 			if(
-				( ! $cached = wp_cache_get( $this->cachekey , 'bcmspostloop' ) ) ||
+				! $cached ||
 				( ! isset( $cached->time ) ) ||
 				( time() > $cached->time + $this->ttl )
 			)
@@ -371,12 +372,10 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			{
 				echo '<!-- postloop fetched from cache, generated on '. date( DATE_RFC822 , $cached->time ) .' -->';
 			}
-
 		}
 
 		if( ! isset( $cached->html ) && $ourposts->have_posts() )
 		{
-
 			// get the templates, thumbnail size, and other stuff
 			$this->post_templates = (array) bcms_postloop()->get_templates('post');
 			$cached->template = $this->post_templates[ $instance['template'] ];
@@ -477,7 +476,6 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			$instance['extra_classes'] = isset( $instance['extra_classes'] ) ? (array) $instance['extra_classes'] : array();
 			$extra_classes = array_merge( $extra_classes , $instance['extra_classes'] );
 
-
 			// output the widget
 			echo str_replace( 'class="', 'class="'. implode( ' ' , $extra_classes ) .' ' , $before_widget );
 			$title = apply_filters( 'widget_title', empty( $instance['title'] ) ? '' : $instance['title'] );
@@ -488,9 +486,9 @@ class bCMS_PostLoop_Widget extends WP_Widget
 
 			echo $cached->html . $after_widget;
 
-			if( isset( $this->cachekey ))
+			if ( isset( $cachekey ) && $this->use_cache )
 			{
-				wp_cache_set( $this->cachekey , (object) array( 'html' => $cached->html , 'template' => $cached->template , 'instance' => $instance , 'time' => time() ) , 'bcmspostloop' , $this->ttl );
+				wp_cache_set( $cachekey , (object) array( 'html' => $cached->html , 'template' => $cached->template , 'instance' => $instance , 'time' => time() ) , 'bcmspostloop' , $this->ttl );
 			}
 		}
 
@@ -499,12 +497,11 @@ class bCMS_PostLoop_Widget extends WP_Widget
 
 	public function update( $new_instance, $old_instance )
 	{
-
 		$instance = $old_instance;
 
 		$instance['title'] = wp_kses( $new_instance['title'], array() );
 		$instance['subtitle'] = wp_kses( $new_instance['subtitle'], array() );
-		$instance['title_show'] = absint( $new_instance['title_show'] );
+		$instance['title_show'] = absint( isset( $new_instance['title_show'] ) ? $new_instance['title_show'] : 0 );
 
 		$allowed_queries = array( 'normal' , 'custom' );
 		$predefined_queries = apply_filters( 'postloop_predefined_queries' , array());
@@ -520,9 +517,9 @@ class bCMS_PostLoop_Widget extends WP_Widget
 		$instance['status'] = (array) array_intersect_key( $this->get_post_statuses(), $new_instance['status'] );
 
 		$instance['categoriesbool'] = in_array( $new_instance['categoriesbool'], array( 'in', 'and', 'not_in') ) ? $new_instance['categoriesbool']: '';
-		$instance['categories_in'] = array_filter( array_map( 'absint', $new_instance['categories_in'] ));
+		$instance['categories_in'] = isset( $new_instance['categories_in'] ) ? array_filter( array_map( 'absint', $new_instance['categories_in'] ) ) : array();
 		$instance['categories_in_related'] = (int) $new_instance['categories_in_related'];
-		$instance['categories_not_in'] = array_filter( array_map( 'absint', $new_instance['categories_not_in'] ));
+		$instance['categories_not_in'] = isset( $new_instance['categories_not_in'] ) ? array_filter( array_map( 'absint', $new_instance['categories_not_in'] ) ) : array();
 		$instance['categories_not_in_related'] = (int) $new_instance['categories_not_in_related'];
 		$instance['tagsbool'] = in_array( $new_instance['tagsbool'], array( 'in', 'and', 'not_in') ) ? $new_instance['tagsbool']: '';
 		$tag_name = '';
@@ -579,20 +576,20 @@ class bCMS_PostLoop_Widget extends WP_Widget
 				}
 
 				$instance['tax_'. $taxonomy .'_not_in_related'] = (int) $new_instance['tax_'. $taxonomy .'_not_in_related'];
-			}
-		}
+			}// end foreach
+		}// end if
 
 		$instance['post__in'] = array_filter( array_map( 'absint', explode( ',', $new_instance['post__in'] )));
 		$instance['post__not_in'] = array_filter( array_map( 'absint', explode( ',', $new_instance['post__not_in'] )));
 		$instance['comments'] = in_array( $new_instance['comments'], array( 'unset', 'yes', 'no' ) ) ? $new_instance['comments']: '';
 
-		$instance['activity'] = in_array( $new_instance['activity'], array( 'pop_most', 'pop_least', 'pop_recent', 'comment_recent', 'comment_few') ) ? $new_instance['activity']: '';
+		$instance['activity'] = isset( $new_instance['activity'] ) && in_array( $new_instance['activity'], array( 'pop_most', 'pop_least', 'pop_recent', 'comment_recent', 'comment_few') ) ? $new_instance['activity']: '';
 		$instance['age_bool'] = in_array( $new_instance['age_bool'], array( 'newer', 'older') ) ? $new_instance['age_bool']: '';
 		$instance['age_num'] = absint( $new_instance['age_num'] );
 		$instance['age_unit'] = in_array( $new_instance['age_unit'], array( 'day', 'month', 'year') ) ? $new_instance['age_unit']: '';
-		$instance['agestrtotime'] = strtotime( $new_instance['agestrtotime'] ) ? $new_instance['agestrtotime'] : '';
+		$instance['agestrtotime'] = isset( $new_instance['agestrtotime'] ) && strtotime( $new_instance['agestrtotime'] ) ? $new_instance['agestrtotime'] : '';
 		$instance['relationship'] = in_array( $new_instance['relationship'], array( 'similar', 'excluding') ) ? $new_instance['relationship']: '';
-		$instance['relatedto'] = array_filter( (array) array_map( 'intval', (array) $new_instance['relatedto'] ));
+		$instance['relatedto'] = isset( $new_instance['relatedto'] ) ? array_filter( array_map( 'intval', $new_instance['relatedto'] ) ) : array();
 		$instance['count'] = absint( $new_instance['count'] );
 		$instance['order'] = in_array( $new_instance['order'], array( 'age_new', 'age_old', 'title_az', 'title_za', 'comment_new', 'comment_count', 'pop_recent', 'rand', 'menu_order' ) ) ? $new_instance['order']: '';
 		$instance['template'] = wp_kses( $new_instance['template'], array() );
@@ -603,17 +600,12 @@ class bCMS_PostLoop_Widget extends WP_Widget
 		{
 			$instance['thumbnail_size'] = in_array( $new_instance['thumbnail_size'], (array) get_intermediate_image_sizes() ) ? $new_instance['thumbnail_size']: '';
 		}
-		$instance['columns'] = absint( $new_instance['columns'] );
+		$instance['columns'] = isset( $new_instance['columns'] ) ? absint( $new_instance['columns'] ) : 0;
 
 		$this->justupdated = TRUE;
 
-/*
-var_dump( $new_instance['categories_in_related'] );
-var_dump( $instance['categories_in_related'] );
-die;
-*/
 		return $instance;
-	}
+	}//end update
 
 	public function form( $instance )
 	{
@@ -1032,7 +1024,7 @@ die;
 				<p>
 					<label for="<?php echo $this->get_field_id('offset_run'); ?>"><?php _e( 'From items in the loop, show N items' ); ?></label>
 					<select name="<?php echo $this->get_field_name('offset_run'); ?>" id="<?php echo $this->get_field_id('offset_run'); ?>" class="widefat">
-					<option value="" <?php selected( $instance['offset_run'], $i ); ?>></option>
+					<option value="" <?php selected( $instance['offset_run'], '' ); ?>></option>
 					<?php for( $i = 1; $i < 51; $i++ ){ ?>
 						<option value="<?php echo $i; ?>" <?php selected( $instance['offset_run'], $i ); ?>><?php echo $i; ?></option>
 					<?php } ?>
@@ -1099,7 +1091,6 @@ die;
 
 		return $statuses;
 	}
-
 
 	public function control_thumbnails( $default = 'nines-thumbnail-small' )
 	{
@@ -1169,7 +1160,7 @@ die;
 
 			$tax = get_taxonomy( $taxonomy );
 			$tax_name = $tax->label;
-?>
+			?>
 			<div id="<?php echo $this->get_field_id( 'tax_'. $taxonomy ); ?>-container" class="postloop container hide-if-js <?php echo $this->tax_posttype_classes($taxonomy); ?>">
 				<label for="<?php echo $this->get_field_id( 'tax_'. $taxonomy .'_bool' ); ?>"><?php echo $tax_name; ?></label>
 				<div id="<?php echo $this->get_field_id( 'tax_'. $taxonomy ); ?>-contents" class="contents hide-if-js">
@@ -1196,7 +1187,7 @@ die;
 
 						<br />And terms from<br /><select name="<?php echo $this->get_field_name( 'tax_'. $taxonomy .'_in_related' ); ?>" id="<?php echo $this->get_field_id( 'tax_'. $taxonomy .'_in_related' ); ?>" class="widefat <?php if( $instance[ 'tax_'. $taxonomy .'_in_related' ] ) echo 'open-on-value'; ?>">
 							<option value="0" '. <?php selected( $instance[ 'tax_'. $taxonomy .'_in_related' ] , 0 ) ?> .'></option>
-<?php
+							<?php
 							foreach( bcms_postloop()->instances as $number => $loop )
 							{
 								if( $number == $this->number )
@@ -1206,7 +1197,7 @@ die;
 
 								echo '<option value="'. $number .'" '. selected( (int) $instance[ 'tax_'. $taxonomy .'_in_related' ] , (int) $number , FALSE ) .'>'. $loop['title'] .'<small> (id:'. $number .')</small></option>';
 							}
-?>
+							?>
 
 						</select></li>
 					</p>
@@ -1230,7 +1221,7 @@ die;
 
 						<br />And terms from<br /><select name="<?php echo $this->get_field_name( 'tax_'. $taxonomy .'_not_in_related' ); ?>" id="<?php echo $this->get_field_id( 'tax_'. $taxonomy .'_not_in_related' ); ?>" class="widefat <?php if( $instance[ 'tax_'. $taxonomy .'_not_in_related' ] ) echo 'open-on-value'; ?>">
 							<option value="0" '. <?php selected( (int) $instance[ 'tax_'. $taxonomy .'_not_in_related' ] , 0 ) ?> .'></option>
-<?php
+							<?php
 							foreach( bcms_postloop()->instances as $number => $loop )
 							{
 								if( $number == $this->number )
@@ -1238,13 +1229,13 @@ die;
 
 								echo '<option value="'. $number .'" '. selected( (int) $instance[ 'tax_'. $taxonomy .'_not_in_related' ] , (int) $number , FALSE ) .'>'. $loop['title'] .'<small> (id:'. $number .')</small></option>';
 							}
-?>
+							?>
 
 						</select></li>
 					</p>
 				</div>
 			</div>
-<?php
+			<?php
 		}
 	}
 
