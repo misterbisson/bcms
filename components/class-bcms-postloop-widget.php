@@ -38,6 +38,8 @@ class bCMS_PostLoop_Widget extends WP_Widget
 	{
 		global $bsuite, $wpdb, $mywijax;
 
+		$instance_id = str_replace( 'postloop-', '', $this->id );
+
 		$cached = new stdClass();
 
 		$this->wijax_varname = $mywijax->encoded_name( $this->id );
@@ -281,7 +283,9 @@ class bCMS_PostLoop_Widget extends WP_Widget
 				foreach( $instance['relatedto'] as $related_loop => $temp )
 				{
 					if( isset( bcms_postloop()->posts[ $related_loop ] ))
+					{
 						$criteria['post__not_in'] = array_merge( (array) $criteria['post__not_in'] , bcms_postloop()->posts[ $related_loop ] );
+					}//end if
 					else
 						echo '<!-- error: related post loop is not available -->';
 				}
@@ -315,7 +319,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			//echo '<pre>'. print_r( $instance , TRUE ) .'</pre>';
 
 			// allow filtering of the criteria
-			$criteria = apply_filters( 'postloop_criteria' , $criteria , $instance );
+			$criteria = apply_filters( 'postloop_criteria', $criteria, $instance );
 
 			// print the post selection info for logged-in administrators
 			if( ( ! is_wijax() ) && is_user_logged_in() && current_user_can( 'edit_theme_options' ))
@@ -329,7 +333,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			$cachekey = md5( serialize( $criteria ) . serialize( $instance ) . 'q' );
 			$cached = $this->use_cache ? wp_cache_get( $cachekey, 'bcmspostloop' ) : FALSE;
 
-			if(
+			if (
 				! $cached ||
 				( ! isset( $cached->time ) ) ||
 				( time() > $cached->time + $this->ttl )
@@ -342,40 +346,54 @@ class bCMS_PostLoop_Widget extends WP_Widget
 
 				// add a filter that inserts a comment that allows us to track the query
 				bcms_postloop()->sql_comment = 'WP_Query defined in bCMS postloop widget: ' . $this->id;
-				add_filter( 'posts_request' , array( bcms_postloop(), 'posts_request_once' ));
+				add_filter( 'posts_request', array( bcms_postloop(), 'posts_request_once' ) );
 
 				// no cache exists, executing the query
 				$ourposts = new WP_Query( $criteria );
 
-				echo "\n<!-- postloop generated fresh on ". date( DATE_RFC822 ) .' -->';
-
-				//echo '<pre>'. print_r( $ourposts , TRUE ) .'</pre>';
+				echo "\n<!-- postloop generated fresh on " . date( DATE_RFC822 ) . ' -->';
 
 				// print the wp_query object for logged-in administrators
-				if( ( ! is_wijax() ) && is_user_logged_in() && current_user_can( 'edit_theme_options' ))
+				if ( ( ! is_wijax() ) && is_user_logged_in() && current_user_can( 'edit_theme_options' ) )
 				{
 					$debug_copy = clone $ourposts;
 					unset( $debug_copy->post );
-					foreach( $debug_copy->posts as $k => $v )
+					foreach ( $debug_copy->posts as $k => $v )
 					{
 						$debug_copy->posts[ $k ] = (object) array(
-							'ID' => $v->ID ,
-							'post_date' => $v->post_date ,
-							'post_title' => $v->post_title
+							'ID' => $v->ID,
+							'post_date' => $v->post_date,
+							'post_title' => $v->post_title,
 						);
-					}
+					}//end foreach
 
-					echo "<!-- postloop wp_query obj (excludes posts) \n". esc_html( print_r( $debug_copy , TRUE )) .' -->';
-				}
-			}
+					echo "<!-- postloop wp_query obj (excludes posts) \n" . esc_html( print_r( $debug_copy, TRUE ) ) . ' -->';
+				}//end if
+			}//end if
 			else
 			{
-				echo '<!-- postloop fetched from cache, generated on '. date( DATE_RFC822 , $cached->time ) .' -->';
-			}
-		}
+				// we're loading from cache. Let's make sure the post ids are stored in bcms_postloop so
+				// other widgets can reference them
+				if ( isset( $cached->post_ids ) && count( $cached->post_ids ) )
+				{
+					bcms_postloop()->posts[ $instance_id ] = $cached->post_ids;
+				}//end if
 
-		if( ! isset( $cached->html ) && $ourposts->have_posts() )
+				echo '<!-- postloop fetched from cache, generated on ' . date( DATE_RFC822, $cached->time ) . ' -->';
+			}//end else
+		}//end else
+
+		// track whether or not the HTML is fresh.  If it is, we'll be caching
+		$fresh_html = FALSE;
+
+		// let's track the post ids in retrieved in the widget
+		$post_ids = array();
+
+		if ( ! isset( $cached->html ) && $ourposts->have_posts() )
 		{
+			// there isn't any cached HTML, mark as fresh
+			$fresh_html = TRUE;
+
 			// get the templates, thumbnail size, and other stuff
 			$this->post_templates = (array) bcms_postloop()->get_templates('post');
 			$cached->template = $this->post_templates[ $instance['template'] ];
@@ -390,13 +408,13 @@ class bCMS_PostLoop_Widget extends WP_Widget
 			$offset_run = $offset_now = 1;
 
 			// old actions
-			$action_name = 'postloop_'. sanitize_title( basename( $instance['template'] , '.php' ));
-			do_action( $action_name , 'before' , $ourposts , bcms_postloop() );
+			$action_name = 'postloop_' . sanitize_title( basename( $instance['template'], '.php' ) );
+			do_action( $action_name, 'before', $ourposts, bcms_postloop() );
 
 			// new actions
-			bcms_postloop()->do_action( 'post' , $instance['template'], 'before' , $ourposts , $this );
+			bcms_postloop()->do_action( 'post', $instance['template'], 'before', $ourposts, $this );
 
-			while( $ourposts->have_posts() )
+			while ( $ourposts->have_posts() )
 			{
 				unset( $GLOBALS['pages'] ); // to address ticket: http://core.trac.wordpress.org/ticket/12651
 
@@ -404,20 +422,23 @@ class bCMS_PostLoop_Widget extends WP_Widget
 
 				// weird feature to separate a single postloop into multiple widgets
 				// set where in the loop we start the output
-				if( ! empty( $instance['offset_start'] ) && ($instance['offset_start'] > $offset_now) )
+				if ( ! empty( $instance['offset_start'] ) && ( $instance['offset_start'] > $offset_now ) )
 				{
 					$offset_now ++;
 					continue;
-				}
+				}//end if
+
 				// set how many we display
-				if( ! empty( $instance['offset_run'] ) && ($instance['offset_run'] < $offset_run) )
+				if ( ! empty( $instance['offset_run'] ) && ( $instance['offset_run'] < $offset_run ) )
 				{
 					continue;
-				}
+				}//end if
 
 				$offset_run ++;
 
 				global $id, $post;
+
+				$post_ids[] = $post->ID;
 
 				// get the matching post IDs for the bcms_postloop() object
 				bcms_postloop()->posts[ $this->number ][] = $id;
@@ -426,74 +447,82 @@ class bCMS_PostLoop_Widget extends WP_Widget
 				$terms = wp_get_object_terms( $id, (array) get_object_taxonomies( $post->post_type ) );
 
 				// get the term taxonomy IDs for the bcms_postloop() object
-				foreach( $terms as $term )
+				foreach ( $terms as $term )
 				{
 					if ( ! isset( bcms_postloop()->terms[ $this->number ] ) )
 					{
-						bcms_postloop()->terms[ $this->number ] = array( $term->taxonomy =>  array( $term->term_id =>0 ) );
-					}
+						bcms_postloop()->terms[ $this->number ] = array( $term->taxonomy => array( $term->term_id => 0 ) );
+					}//end if
 					elseif ( ! isset( bcms_postloop()->terms[ $this->number ][ $term->taxonomy ] ) )
 					{
-						bcms_postloop()->terms[ $this->number ][ $term->taxonomy ] = array( $term->term_id =>0 );
-					}
+						bcms_postloop()->terms[ $this->number ][ $term->taxonomy ] = array( $term->term_id => 0 );
+					}//end elseif
 					elseif ( ! isset( bcms_postloop()->terms[ $this->number ][ $term->taxonomy ][ $term->term_id ] ) )
 					{
 						bcms_postloop()->terms[ $this->number ][ $term->taxonomy ][ $term->term_id ] = 0;
-					}
+					}//end elseif
 
 					bcms_postloop()->terms[ $this->number ][ $term->taxonomy ][ $term->term_id ]++;
-				}
+				}//end foreach
 
 				// old actions
-				do_action( $action_name , 'post' , $ourposts , bcms_postloop() );
+				do_action( $action_name, 'post', $ourposts, bcms_postloop() );
 
 				// new actions
-				bcms_postloop()->do_action( 'post' , $instance['template'] , '' , $ourposts , $this );
-
-			}
+				bcms_postloop()->do_action( 'post', $instance['template'], '', $ourposts, $this );
+			}//end while
 
 			// old actions
-			do_action( $action_name , 'after' , $ourposts , bcms_postloop() );
+			do_action( $action_name, 'after', $ourposts, bcms_postloop() );
 
 			// new actions
-			bcms_postloop()->do_action( 'post' , $instance['template'] , 'after' , $ourposts , $this );
+			bcms_postloop()->do_action( 'post', $instance['template'], 'after', $ourposts, $this );
 
 			$cached->html = ob_get_clean();
 			// end process the loop
-		}
+		}//end if
 
-		if( isset( $cached->html ))
+		if ( isset( $cached->html ) )
 		{
-			if( isset( $cached->instance ))
+			if ( isset( $cached->instance ) )
 			{
 				$instance = $cached->instance;
-			}
+			}//end if
 
 			// figure out what classes to put on the widget
 			$extra_classes = array();
-			$extra_classes[] = str_replace( '9spot', 'nines' , sanitize_title_with_dashes( $cached->template['name'] ));
+			$extra_classes[] = str_replace( '9spot', 'nines', sanitize_title_with_dashes( $cached->template['name'] ) );
 			$extra_classes[] = 'widget-post_loop-'. sanitize_title_with_dashes( $instance['title'] );
 			$instance['extra_classes'] = isset( $instance['extra_classes'] ) ? (array) $instance['extra_classes'] : array();
-			$extra_classes = array_merge( $extra_classes , $instance['extra_classes'] );
+			$extra_classes = array_merge( $extra_classes, $instance['extra_classes'] );
 
 			// output the widget
-			echo str_replace( 'class="', 'class="'. implode( ' ' , $extra_classes ) .' ' , $before_widget );
+			echo str_replace( 'class="', 'class="' . implode( ' ', $extra_classes ) .' ', $before_widget );
 			$title = apply_filters( 'widget_title', empty( $instance['title'] ) ? '' : $instance['title'] );
 			if ( $instance['title_show'] && $title )
 			{
 				echo $before_title . $title . $after_title .'<div class="widget_subtitle">'. $instance['subtitle'] .'</div>';
-			}
+			}//end if
 
 			echo $cached->html . $after_widget;
 
-			if ( isset( $cachekey ) && $this->use_cache )
+			// if there is something to cache, it is new, and we want to cache it, let's cache it.
+			if ( $fresh_html && isset( $cachekey ) && $this->use_cache )
 			{
-				wp_cache_set( $cachekey , (object) array( 'html' => $cached->html , 'template' => $cached->template , 'instance' => $instance , 'time' => time() ) , 'bcmspostloop' , $this->ttl );
-			}
-		}
+				$cache_data = (object) array(
+					'html' => $cached->html,
+					'template' => $cached->template,
+					'instance' => $instance,
+					'post_ids' => $post_ids,
+					'time' => time(),
+				);
+				wp_cache_set( $cachekey, $cache_data, 'bcmspostloop', $this->ttl );
+				unset( $cache_data );
+			}//end if
+		}//end if
 
 		unset( bcms_postloop()->current_postloop );
-	}
+	}//end widget
 
 	public function update( $new_instance, $old_instance )
 	{
