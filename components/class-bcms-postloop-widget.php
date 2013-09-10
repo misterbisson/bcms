@@ -420,28 +420,28 @@ class bCMS_PostLoop_Widget extends WP_Widget
 
 				$ourposts->the_post();
 
-				// weird feature to separate a single postloop into multiple widgets
-				// set where in the loop we start the output
-				if ( ! empty( $instance['offset_start'] ) && ( $instance['offset_start'] > $offset_now ) )
-				{
-					$offset_now ++;
-					continue;
-				}//end if
-
-				// set how many we display
-				if ( ! empty( $instance['offset_run'] ) && ( $instance['offset_run'] < $offset_run ) )
-				{
-					continue;
-				}//end if
-
-				$offset_run ++;
-
 				global $id, $post;
 
 				$post_ids[] = $post->ID;
 
 				// get the matching post IDs for the bcms_postloop() object
 				bcms_postloop()->posts[ $this->number ][] = $id;
+
+				// weird feature to separate a single postloop into multiple widgets
+				// set where in the loop we start the output
+				if ( ! empty( $instance['offset_start'] ) && $instance['offset_start'] > $offset_now )
+				{
+					$offset_now++;
+					continue;
+				}//end if
+
+				// set how many we display
+				if ( ! empty( $instance['offset_run'] ) && $instance['offset_run'] < $offset_run )
+				{
+					continue;
+				}//end if
+
+				$offset_run++;
 
 				// get the matching terms by taxonomy
 				$terms = wp_get_object_terms( $id, (array) get_object_taxonomies( $post->post_type ) );
