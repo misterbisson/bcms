@@ -4,8 +4,7 @@
  * bCMS_PostLoop_Widget class
  *
  */
-class bCMS_PostLoop_Widget extends WP_Widget
-{
+class bCMS_PostLoop_Widget extends WP_Widget {
 	public $slug = 'postloop';
 	public $title = 'Post Loop';
 	public $description = 'Build your own post loop';
@@ -20,7 +19,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 		);
 		parent::__construct( $this->slug, __( $this->title ), $widget_ops );
 
-		add_filter( 'wijax-actions' , array( $this , 'wjiax_actions' ) );
+		add_filter( 'wijax-actions', array( $this, 'wjiax_actions' ) );
 	}
 
 	public function wjiax_actions( $actions )
@@ -37,8 +36,6 @@ class bCMS_PostLoop_Widget extends WP_Widget
 	public function widget( $args, $instance )
 	{
 		global $bsuite, $wpdb, $mywijax;
-
-		$instance_id = str_replace( 'postloop-', '', $this->id );
 
 		$cached = new stdClass();
 
@@ -376,7 +373,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 				// other widgets can reference them
 				if ( isset( $cached->post_ids ) && count( $cached->post_ids ) )
 				{
-					bcms_postloop()->posts[ $instance_id ] = $cached->post_ids;
+					bcms_postloop()->posts[ $this->number ] = $cached->post_ids;
 				}//end if
 
 				echo '<!-- postloop fetched from cache, generated on ' . date( DATE_RFC822, $cached->time ) . ' -->';
@@ -421,8 +418,6 @@ class bCMS_PostLoop_Widget extends WP_Widget
 				$ourposts->the_post();
 
 				global $id, $post;
-
-				$post_ids[] = $post->ID;
 
 				// get the matching post IDs for the bcms_postloop() object
 				bcms_postloop()->posts[ $this->number ][] = $id;
@@ -513,7 +508,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 					'html' => $cached->html,
 					'template' => $cached->template,
 					'instance' => $instance,
-					'post_ids' => $post_ids,
+					'post_ids' => bcms_postloop()->posts[ $this->number ],
 					'time' => time(),
 				);
 				wp_cache_set( $cachekey, $cache_data, 'bcmspostloop', $this->ttl );
