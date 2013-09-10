@@ -1,5 +1,5 @@
 === bCMS ===
-Contributors: misterbisson
+Contributors: misterbisson, borkweb, zbtirrell
 Donate link: http://MaisonBisson.com/
 Tags: bSuite, cms, content management, formatting, widgets, shortcodes, post loop, post, posts, page, pages, show posts, scroller, featured posts
 Requires at least: 3.3
