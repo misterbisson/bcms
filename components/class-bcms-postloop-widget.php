@@ -4,8 +4,7 @@
  * bCMS_PostLoop_Widget class
  *
  */
-class bCMS_PostLoop_Widget extends WP_Widget
-{
+class bCMS_PostLoop_Widget extends WP_Widget {
 	public $slug = 'postloop';
 	public $title = 'Post Loop';
 	public $description = 'Build your own post loop';
@@ -20,7 +19,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 		);
 		parent::__construct( $this->slug, __( $this->title ), $widget_ops );
 
-		add_filter( 'wijax-actions' , array( $this , 'wjiax_actions' ) );
+		add_filter( 'wijax-actions', array( $this, 'wjiax_actions' ) );
 	}
 
 	public function wjiax_actions( $actions )
@@ -37,8 +36,6 @@ class bCMS_PostLoop_Widget extends WP_Widget
 	public function widget( $args, $instance )
 	{
 		global $bsuite, $wpdb, $mywijax;
-
-		$instance_id = str_replace( 'postloop-', '', $this->id );
 
 		$cached = new stdClass();
 
@@ -376,7 +373,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 				// other widgets can reference them
 				if ( isset( $cached->post_ids ) && count( $cached->post_ids ) )
 				{
-					bcms_postloop()->posts[ $instance_id ] = $cached->post_ids;
+					bcms_postloop()->posts[ $this->number ] = $cached->post_ids;
 				}//end if
 
 				echo '<!-- postloop fetched from cache, generated on ' . date( DATE_RFC822, $cached->time ) . ' -->';
@@ -420,28 +417,26 @@ class bCMS_PostLoop_Widget extends WP_Widget
 
 				$ourposts->the_post();
 
+				global $id, $post;
+
+				// get the matching post IDs for the bcms_postloop() object
+				bcms_postloop()->posts[ $this->number ][] = $id;
+
 				// weird feature to separate a single postloop into multiple widgets
 				// set where in the loop we start the output
-				if ( ! empty( $instance['offset_start'] ) && ( $instance['offset_start'] > $offset_now ) )
+				if ( ! empty( $instance['offset_start'] ) && $instance['offset_start'] > $offset_now )
 				{
-					$offset_now ++;
+					$offset_now++;
 					continue;
 				}//end if
 
 				// set how many we display
-				if ( ! empty( $instance['offset_run'] ) && ( $instance['offset_run'] < $offset_run ) )
+				if ( ! empty( $instance['offset_run'] ) && $instance['offset_run'] < $offset_run )
 				{
 					continue;
 				}//end if
 
-				$offset_run ++;
-
-				global $id, $post;
-
-				$post_ids[] = $post->ID;
-
-				// get the matching post IDs for the bcms_postloop() object
-				bcms_postloop()->posts[ $this->number ][] = $id;
+				$offset_run++;
 
 				// get the matching terms by taxonomy
 				$terms = wp_get_object_terms( $id, (array) get_object_taxonomies( $post->post_type ) );
@@ -513,7 +508,7 @@ class bCMS_PostLoop_Widget extends WP_Widget
 					'html' => $cached->html,
 					'template' => $cached->template,
 					'instance' => $instance,
-					'post_ids' => $post_ids,
+					'post_ids' => bcms_postloop()->posts[ $this->number ],
 					'time' => time(),
 				);
 				wp_cache_set( $cachekey, $cache_data, 'bcmspostloop', $this->ttl );
