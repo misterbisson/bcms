@@ -224,7 +224,7 @@ class bCMS_PostLoop
 <?php
 	}
 
-	function do_template( $name , $event , $query_object = FALSE , $postloop_object = FALSE , $widget = FALSE )
+	function do_template( $name , $event , $query_object = FALSE , $postloop_object = FALSE , $widget = FALSE, $instance = array() )
 	{
 
 		// get the post templates
@@ -276,7 +276,7 @@ class bCMS_PostLoop
 		return apply_filters( 'postloop_actions' , $actions );
 	}
 
-	function do_action( $type , $name , $event , $query_object , $widget )
+	function do_action( $type , $name , $event , $query_object , $widget, $instance = array() )
 	{
 
 		$this->current = new stdClass;
@@ -286,7 +286,7 @@ class bCMS_PostLoop
 		$actions = $this->get_actions( $type );
 
 		if( isset( $actions[ $name ] ) && is_callable( $actions[ $name ]['callback'] ))
-			call_user_func( $actions[ $name ]['callback'] , $name , $event , $query_object , $this  , $widget );
+			call_user_func( $actions[ $name ]['callback'] , $name , $event , $query_object , $this  , $widget, $instance );
 	}
 
 	function posts_where_comments_yes_once( $sql )
