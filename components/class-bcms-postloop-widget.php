@@ -409,7 +409,7 @@ class bCMS_PostLoop_Widget extends WP_Widget {
 			do_action( $action_name, 'before', $ourposts, bcms_postloop() );
 
 			// new actions
-			bcms_postloop()->do_action( 'post', $instance['template'], 'before', $ourposts, $this );
+			bcms_postloop()->do_action( 'post', $instance['template'], 'before', $ourposts, $this, $instance );
 
 			while ( $ourposts->have_posts() )
 			{
@@ -464,14 +464,14 @@ class bCMS_PostLoop_Widget extends WP_Widget {
 				do_action( $action_name, 'post', $ourposts, bcms_postloop() );
 
 				// new actions
-				bcms_postloop()->do_action( 'post', $instance['template'], '', $ourposts, $this );
+				bcms_postloop()->do_action( 'post', $instance['template'], '', $ourposts, $this, $instance );
 			}//end while
 
 			// old actions
 			do_action( $action_name, 'after', $ourposts, bcms_postloop() );
 
 			// new actions
-			bcms_postloop()->do_action( 'post', $instance['template'], 'after', $ourposts, $this );
+			bcms_postloop()->do_action( 'post', $instance['template'], 'after', $ourposts, $this, $instance );
 
 			$cached->html = ob_get_clean();
 			// end process the loop
