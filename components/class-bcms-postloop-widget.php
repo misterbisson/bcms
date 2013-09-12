@@ -319,7 +319,7 @@ class bCMS_PostLoop_Widget extends WP_Widget {
 			$criteria = apply_filters( 'postloop_criteria', $criteria, $instance );
 
 			// print the post selection info for logged-in administrators
-			if( ( ! is_wijax() ) && is_user_logged_in() && current_user_can( 'edit_theme_options' ))
+			if ( ! is_wijax() && is_user_logged_in() && current_user_can( 'edit_theme_options' ) && apply_filters( 'bcms_postloop_debug', TRUE ) )
 			{
 				echo "<!-- postloop criteria \n". esc_html( print_r( $criteria , TRUE )) .' -->';
 			}
@@ -351,7 +351,7 @@ class bCMS_PostLoop_Widget extends WP_Widget {
 				echo "\n<!-- postloop generated fresh on " . date( DATE_RFC822 ) . ' -->';
 
 				// print the wp_query object for logged-in administrators
-				if ( ( ! is_wijax() ) && is_user_logged_in() && current_user_can( 'edit_theme_options' ) )
+				if ( ! is_wijax() && is_user_logged_in() && current_user_can( 'edit_theme_options' ) && apply_filters( 'bcms_postloop_debug', TRUE ) )
 				{
 					$debug_copy = clone $ourposts;
 					unset( $debug_copy->post );
