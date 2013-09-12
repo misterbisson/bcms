@@ -171,6 +171,18 @@ class bCMS_Search
 		);
 		$content .= "\n". implode( ' ', $tags );
 
+		// insert the author name so their content is findable with a keyword search
+		if (
+			( ! empty( $post->post_author ) ) &&
+			$author = get_user_by( 'id', $post->post_author )
+		)
+		{
+			$content = $content . sprintf( "\n%s %s\n",
+				isset( $author->data->display_name ) ? $author->data->display_name : '',
+				isset( $author->data->user_nicename ) ? $author->data->user_nicename : ''
+			);
+		}
+
 		// simple cleaning
 		$content = stripslashes( html_entity_decode( $content ) );
 
