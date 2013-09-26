@@ -192,10 +192,7 @@ class bCMS_PostLoop_Widget extends WP_Widget {
 				$criteria['post__in'] = $instance['post__in'];
 			}
 
-			if( ! empty( $instance['post__not_in'] ))
-			{
-				$criteria['post__not_in'] = $instance['post__not_in'];
-			}
+			$criteria['post__not_in'] = (array) $instance['post__not_in'];
 
 			$instance['comments'] = isset( $instance['comments'] ) ? $instance['comments'] : '';
 			switch( $instance['comments'] )
@@ -295,7 +292,7 @@ class bCMS_PostLoop_Widget extends WP_Widget {
 				{
 					if( isset( bcms_postloop()->posts[ $related_loop ] ) )
 					{
-						$criteria['post__not_in'] = array_merge( (array) $criteria['post__not_in'] , bcms_postloop()->posts[ $related_loop ] );
+						$criteria['post__not_in'] = array_merge( $criteria['post__not_in'] , bcms_postloop()->posts[ $related_loop ] );
 					}// end if
 					else
 					{
