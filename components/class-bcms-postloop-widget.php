@@ -192,7 +192,7 @@ class bCMS_PostLoop_Widget extends WP_Widget {
 				$criteria['post__in'] = $instance['post__in'];
 			}
 
-			$criteria['post__not_in'] = (array) $instance['post__not_in'];
+			$criteria['post__not_in'] = isset( $instance['post__not_in'] ) ? (array) $instance['post__not_in'] : array();
 
 			$instance['comments'] = isset( $instance['comments'] ) ? $instance['comments'] : '';
 			switch( $instance['comments'] )
