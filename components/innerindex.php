@@ -115,7 +115,7 @@ class bSuite_Innerindex
 
 		// receive <h*> tags and insert the ID
 		$this->slugs[] = $slug = substr( sanitize_title_with_dashes( $content[4] ), 0, 30);
-		$count = count( array_keys( $slugs , $slug ));
+		$count = count( array_keys( $this->slugs , $slug ));
 		$content = '<h'. $content[2] .' id="'. $slug . ( 1 < $count ? $count : '' ) .'" '. trim( preg_replace( '/id[^"]*"[^"]*"/', '', $content[3] )) .'>'. $content[4] . $content[5];
 		return $content;
 	}
