@@ -505,7 +505,7 @@ class bCMS_PostLoop_Widget extends WP_Widget {
 			$extra_classes = array_merge( $extra_classes, $instance['extra_classes'] );
 
 			// output the widget
-			echo str_replace( 'class="', 'class="' . implode( ' ', $extra_classes ) .' ', $before_widget );
+			echo str_replace( 'class="', 'class="' . esc_attr( implode( ' ', $extra_classes ) ) .' ', $before_widget );
 			$title = apply_filters( 'widget_title', empty( $instance['title'] ) ? '' : $instance['title'] );
 			if ( isset( $instance['title_show'] ) && $instance['title_show'] && $title )
 			{
