@@ -3,7 +3,7 @@ Contributors: misterbisson, borkweb, zbtirrell
 Donate link: http://MaisonBisson.com/
 Tags: bSuite, cms, content management, formatting, widgets, shortcodes, post loop, post, posts, page, pages, show posts, scroller, featured posts
 Requires at least: 3.3
-Tested up to: 3.5.1
+Tested up to: 3.8
 Stable tag: trunk
 
 A suite of tools that improve WordPress' CMS capabilities.
@@ -24,6 +24,10 @@ Make WordPress a better CMS. Create a post loop in a widget. Lazy load widgets. 
 
 1. Automatically build an index of headings on a page and create a table of contents to it (with links to anchors on the page)
 1. Embed a list of pages or sub-pages on a page or post
+
+= Fork me! =
+
+This plugin is on Github: https://github.com/misterbisson/bcms
 
 = History =
 
