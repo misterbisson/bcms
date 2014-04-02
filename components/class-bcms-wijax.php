@@ -321,9 +321,7 @@ class bCMS_Wijax
 					$widget_attr_el.remove();
 					
 					// trigger an event in case anything else needs to know when this widget has loaded
-					var event = jQuery.Event( 'wijax-loaded' );
-					event.widget_id = widget_id;
-					$( document ).trigger( event );
+					$( document ).trigger( 'wijax-loaded', [ widget_id ] );
 				}
 			});
 		};
