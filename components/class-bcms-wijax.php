@@ -305,7 +305,7 @@ class bCMS_Wijax
 					var $widget_title_el = $widget_parent.find('span.wijax-widgettitle');
 					var widget_title = $widget_title_el.text();
 
-					//don't set a widget title div if there is no title text
+					// don't set a widget title div if there is no title text
 					if (widget_title)
 						$widget_parent.prepend(title_before + widget_title + title_after);
 					
@@ -319,6 +319,9 @@ class bCMS_Wijax
 					$widget_parent.addClass( widget_classes );
 					$widget_parent.removeClass( 'widget_wijax' );
 					$widget_attr_el.remove();
+					
+					// trigger an event in case anything else needs to know when this widget has loaded
+					$( document ).trigger( 'wijax-loaded', [ widget_id ] );
 				}
 			});
 		};
