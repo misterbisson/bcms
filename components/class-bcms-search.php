@@ -357,7 +357,7 @@ window.location = "<?php echo admin_url( 'admin-ajax.php?action=bcms-search-rein
 		$this->posts_join = $this->wpdb->prepare( " INNER JOIN (
 			SELECT post_id, ( $this->relevancy_formula ) AS ftscore
 			FROM $this->search_table
-			WHERE ( MATCH ( content ) AGAINST ( %s $boolean ) )
+			WHERE ( MATCH ( content ) AGAINST ( %s ) )
 			ORDER BY ftscore DESC
 			LIMIT 0, 1250
 		) bcms_search ON ( bcms_search.post_id = ". $this->wpdb->posts .".ID )",
