@@ -282,9 +282,16 @@ class bCMS_Wijax
 ?>
 <script type="text/javascript">	
 	var wijax_widget_reload = true;	
+	var wijax_queue = {
+		max_allowed_requests: 3,
+		processing: [],
+		processed: [],
+		queued: []
+	};
+	var wijax_timer = false;
+
 	;(function($){
-		$.fn.myWijaxLoader = function()
-		{
+		$.fn.myWijaxLoader = function() {
 			var widget_source = $(this).attr('href');
 			var $widget_area = $(this).closest('.wijax-loading');
 			var $widget_parent = $widget_area.parent();
@@ -293,10 +300,27 @@ class bCMS_Wijax
 			var title_before = unescape( opts.title_before );
 			var title_after = unescape( opts.title_after );
 
-			$.ajax({ 
-				url: widget_source, 
+			wijax_queue.queued.push({
+				url: widget_source,
 				dataType: 'script',
 				cache: true,
+				complete: function() {
+					var url = widget_source;
+
+					// find the wijax request that completed
+					for ( var i in wijax_queue.processing ) {
+						// if the URLs don't match, then this wasn't the request that just completed
+						if ( wijax_queue.processing[ i ].url != url ) {
+							continue;
+						}//end if
+
+						// extract the wijax request from the processing array
+						var item = wijax_queue.processing.splice( i, i );
+
+						// stick the wijax request into the processed array
+						wijax_queue.processed.push( item );
+					}//end for
+				},
 				success: function() {
 					// insert the fetched markup
 					$( $widget_area ).replaceWith( window[varname] );
@@ -319,12 +343,43 @@ class bCMS_Wijax
 					$widget_parent.addClass( widget_classes );
 					$widget_parent.removeClass( 'widget_wijax' );
 					$widget_attr_el.remove();
-					
+
 					// trigger an event in case anything else needs to know when this widget has loaded
 					$( document ).trigger( 'wijax-loaded', [ widget_id ] );
 				}
 			});
+
+			// for each queuing of a wijax request, pass in a boolean that indicates whether or not
+			// to start a new setTimeout
+			wijax_process( ! wijax_timer );
 		};
+
+		var wijax_process = function( set_timer ) {
+			if ( false !== set_timer ) {
+				set_timer = true;
+			}//end if
+
+			// allow X wijax requests to process
+			while (
+				wijax_queue.processing.length < wijax_queue.max_allowed_requests
+				&& wijax_queue.queued.length > 0
+			) {
+				var item = wijax_queue.queued.shift();
+
+				$.ajax( item );
+
+				wijax_queue.processing.push( item );
+			}//end while
+
+			if ( ! wijax_queue.queued.length ) {
+				wijax_timer = false;
+				return;
+			}//end if
+
+			if ( set_timer ) {
+				wijax_timer = setTimeout( wijax_process, 300 );
+			}//end if
+		};// end wijax_process
 
 		// do the onload widgets
 		$(window).load(function(){
