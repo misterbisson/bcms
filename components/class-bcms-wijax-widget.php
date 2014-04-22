@@ -44,8 +44,10 @@ class bCMS_Wijax_Widget extends WP_Widget
 		$title_class = (string) $title_class[2];
 
 		$loadtime = ($instance['loadtime']) ? $instance['loadtime'] : 'onload';
+
+		$classes = isset( $instance['classes'] ) ? $instance['classes'] : '';
 ?>
-		<span class="wijax-loading">
+		<span class="wijax-loading <?php echo esc_attr( $classes ); ?>">
 			<img src="<?php echo $mywijax->path_web  .'/img/loading-gray.gif'; ?>" alt="loading external resource" />
 			<a href="<?php echo $wijax_source; ?>" class="wijax-source <?php echo 'wijax-' . $loadtime;?>" rel="nofollow"></a>
 			<span class="wijax-opts" style="display: none;">
@@ -85,6 +87,7 @@ class bCMS_Wijax_Widget extends WP_Widget
 		$instance['base'] = sanitize_title( $new_instance['base'] );
 		$instance['base-remote'] = esc_url_raw( $new_instance['base-remote'] );
 		$instance['loadtime'] = in_array( $new_instance['loadtime'], array( 'onload', 'onscroll') ) ? $new_instance['loadtime'] : 'onscroll';
+		$instance['classes'] = sanitize_text_field( $new_instance['classes'] );
 
 		return $instance;
 	}
@@ -110,6 +113,13 @@ class bCMS_Wijax_Widget extends WP_Widget
 		echo $this->control_widgets( $instance );
 		echo $this->control_base( $instance );
 		echo $this->control_loadtime( $instance );
+
+?>
+		<p>
+			<label for="<?php echo $this->get_field_id( 'classes' ); ?>">CSS Classes</label>
+			<input class="widefat" id="<?php echo $this->get_field_id( 'classes' ); ?>" name="<?php echo $this->get_field_name( 'classes' ); ?>" type="text" value="<?php echo esc_attr( $instance['classes'] ); ?>"/>
+		</p>
+<?php
 	}
 
 	function control_widgets( $instance , $whichfield = 'widget' )
