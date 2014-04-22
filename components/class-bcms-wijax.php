@@ -284,11 +284,52 @@ class bCMS_Wijax
 	var wijax_widget_reload = true;	
 	var wijax_queue = {
 		max_allowed_requests: 3,
+		timer: false,
 		processing: [],
 		processed: [],
-		queued: []
+		queued: [],
+		process: function( set_timer ) {
+			if ( false !== set_timer ) {
+				set_timer = true;
+			}//end if
+
+			// allow X wijax requests to process
+			while (
+				wijax_queue.processing.length < wijax_queue.max_allowed_requests
+				&& wijax_queue.queued.length > 0
+			) {
+				var item = wijax_queue.queued.shift();
+
+				jQuery.ajax( item );
+
+				wijax_queue.processing.push( item );
+			}//end while
+
+			if ( ! wijax_queue.queued.length ) {
+				wijax_queue.timer = false;
+				return;
+			}//end if
+
+			if ( set_timer ) {
+				wijax_queue.timer = setTimeout( wijax_queue.process, 300 );
+			}//end if
+		},// end process
+		mark_as_processed: function( url ) {
+			// find the wijax request that completed
+			for ( var i in wijax_queue.processing ) {
+				// if the URLs don't match, then this wasn't the request that just completed
+				if ( wijax_queue.processing[ i ].url != url ) {
+					continue;
+				}//end if
+
+				// stick the wijax request into the processed array
+				wijax_queue.processed.push( Object.create( wijax_queue.processing[ i ] ) );
+
+				// remove it from the processing array
+				wijax_queue.processing.splice( i, 1 );
+			}//end for
+		}
 	};
-	var wijax_timer = false;
 
 	;(function($){
 		$.fn.myWijaxLoader = function() {
@@ -305,21 +346,7 @@ class bCMS_Wijax
 				dataType: 'script',
 				cache: true,
 				complete: function() {
-					var url = widget_source;
-
-					// find the wijax request that completed
-					for ( var i in wijax_queue.processing ) {
-						// if the URLs don't match, then this wasn't the request that just completed
-						if ( wijax_queue.processing[ i ].url != url ) {
-							continue;
-						}//end if
-
-						// extract the wijax request from the processing array
-						var item = wijax_queue.processing.splice( i, i );
-
-						// stick the wijax request into the processed array
-						wijax_queue.processed.push( item );
-					}//end for
+					wijax_queue.mark_as_processed( widget_source );
 				},
 				success: function() {
 					// insert the fetched markup
@@ -351,35 +378,8 @@ class bCMS_Wijax
 
 			// for each queuing of a wijax request, pass in a boolean that indicates whether or not
 			// to start a new setTimeout
-			wijax_process( ! wijax_timer );
+			wijax_queue.process( ! wijax_queue.timer );
 		};
-
-		var wijax_process = function( set_timer ) {
-			if ( false !== set_timer ) {
-				set_timer = true;
-			}//end if
-
-			// allow X wijax requests to process
-			while (
-				wijax_queue.processing.length < wijax_queue.max_allowed_requests
-				&& wijax_queue.queued.length > 0
-			) {
-				var item = wijax_queue.queued.shift();
-
-				$.ajax( item );
-
-				wijax_queue.processing.push( item );
-			}//end while
-
-			if ( ! wijax_queue.queued.length ) {
-				wijax_timer = false;
-				return;
-			}//end if
-
-			if ( set_timer ) {
-				wijax_timer = setTimeout( wijax_process, 300 );
-			}//end if
-		};// end wijax_process
 
 		// do the onload widgets
 		$(window).load(function(){
