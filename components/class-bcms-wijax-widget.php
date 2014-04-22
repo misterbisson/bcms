@@ -15,55 +15,71 @@ class bCMS_Wijax_Widget extends WP_Widget
 		add_filter( 'wijax-base-home' , array( $this , 'base_home' ) , 5 );
 	}
 
-	function widget( $args, $instance )
+	public function widget( $args, $instance )
 	{
 		global $mywijax;
 
 		extract( $args );
 
-		if( 'remote' != $instance['base'] )
+		// passed to bCMS_Wijax::varname() to determine if the URL should be normalized or not.
+		// You'll find the call to that method below.
+		$is_local = TRUE;
+
+		if ( 'remote' != $instance['base'] )
 		{
-			$base = apply_filters( 'wijax-base-'. $instance['base'] , '' );
-			if( ! $base )
+			$base = apply_filters( 'wijax-base-' . $instance['base'], '' );
+			if ( ! $base )
+			{
 				return;
+			}//end if
+
 			$wijax_source = $base . $mywijax->encoded_name( $instance['widget'] );
-			$wijax_varname = $mywijax->varname( $wijax_source );
-		}
+		}//end if
 		else
 		{
+			$is_local = FALSE;
 			$wijax_source = $instance['base-remote'] . $mywijax->encoded_name( $instance['widget-custom'] );
-			$wijax_varname = $mywijax->varname( $wijax_source , FALSE );
-		}
+		}//end else
+
+		// if there is a query string, let's make the request with it in place
+		if ( $_SERVER['QUERY_STRING'] )
+		{
+			$wijax_source .= "?{$_SERVER['QUERY_STRING']}";
+		}//end if
+
+		$wijax_varname = $mywijax->varname( $wijax_source, $is_local );
 
 		echo $before_widget;
 
-		preg_match( '/<([\S]*)/' , $before_title , $title_element );
-		$title_element = trim( (string) $title_element[1] , '<>');
+		preg_match( '/<([\S]*)/', $before_title, $title_element );
+		$title_element = trim( (string) $title_element[1], '<>' );
 
-		preg_match( '/class.*?=.*?(\'|")(.+?)(\'|")/' , $before_title , $title_class );
+		preg_match( '/class.*?=.*?(\'|")(.+?)(\'|")/', $before_title, $title_class );
 		$title_class = (string) $title_class[2];
 
-		$loadtime = ($instance['loadtime']) ? $instance['loadtime'] : 'onload';
+		$loadtime = ( $instance['loadtime'] ) ? $instance['loadtime'] : 'onload';
 
 		$classes = isset( $instance['classes'] ) ? $instance['classes'] : '';
-?>
+		?>
 		<span class="wijax-loading <?php echo esc_attr( $classes ); ?>">
 			<img src="<?php echo $mywijax->path_web  .'/img/loading-gray.gif'; ?>" alt="loading external resource" />
-			<a href="<?php echo $wijax_source; ?>" class="wijax-source <?php echo 'wijax-' . $loadtime;?>" rel="nofollow"></a>
+			<a href="<?php echo esc_url( $wijax_source ); ?>" class="wijax-source <?php echo esc_attr( 'wijax-' . $loadtime ); ?>" rel="nofollow"></a>
 			<span class="wijax-opts" style="display: none;">
-				<?php echo json_encode( array( 
-					'source' => $wijax_source ,
-					'varname' => $wijax_varname , 
-					'title_element' => $title_element ,
-					'title_class' => $title_class ,
+				<?php
+				echo json_encode( array(
+					'source' => esc_url( $wijax_source ),
+					'varname' => $wijax_varname,
+					'title_element' => $title_element,
+					'title_class' => $title_class,
 					'title_before' => rawurlencode( $before_title ),
 					'title_after' => rawurlencode( $after_title ),
-				)); ?>
+				) );
+				?>
 			</span>
 		</span>
-<?php
+		<?php
 		echo $after_widget;
-	}
+	}//end widget
 
 	function base_home()
 	{
