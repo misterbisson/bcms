@@ -38,20 +38,20 @@ class bCMS_PostLoop_Scroller
 
 		// register scripts and styles
 		wp_register_script( 'scrollable', $this->path_web . '/js/scrollable.min.js', array('jquery'), TRUE );
-		bcms_late_enqueue_script( 'scrollable' );
+		wp_enqueue_script( 'scrollable' );
 		add_filter( 'print_footer_scripts', array( $this, 'print_js' ), 10, 1 );
 
 		if( $this->settings->css )
 		{
 			wp_register_style( 'scrollable', $this->path_web .'/css/scrollable.css' );
-			bcms_late_enqueue_style( 'scrollable' );
+			wp_enqueue_style( 'scrollable' );
 		}
 	}
 
 	function print_js( $finish_print )
 	{
 ?>
-<script type="text/javascript">	
+<script type="text/javascript">
 	;(function($){
 		$(window).load(function(){
 			var $child = $('<?php echo $this->settings->child_selector; ?>');

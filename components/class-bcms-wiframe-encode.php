@@ -28,7 +28,7 @@ class BCMS_Wiframe_Encode
 
 		header( 'X-Robots-Tag: noindex', TRUE );
 
-		bcms_late_enqueue_script(
+		wp_enqueue_script(
 			'jquery-postmessage',
 			plugins_url( 'components/js/jquery.ba-postmessage.min.js', __DIR__ ),
 			array( 'jquery' ),
@@ -36,7 +36,7 @@ class BCMS_Wiframe_Encode
 			TRUE
 		);
 
-		bcms_late_enqueue_script(
+		wp_enqueue_script(
 			'bcms-wiframe-notify',
 			plugins_url( 'components/js/bcms-wiframe-notify.js', __DIR__ ),
 			array( 'go-subscriptions' ),
