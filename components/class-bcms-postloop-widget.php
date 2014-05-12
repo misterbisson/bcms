@@ -489,6 +489,7 @@ class bCMS_PostLoop_Widget extends WP_Widget {
 				'ttl' => $this->ttl,
 				'use_cache' => $this->use_cache,
 			);
+
 			// new actions
 			bcms_postloop()->do_action( 'post', $instance['template'], 'after', $ourposts, $this, $instance );
 
@@ -530,7 +531,6 @@ class bCMS_PostLoop_Widget extends WP_Widget {
 					'post_ids' => bcms_postloop()->posts[ $preserve['number'] ],
 					'time' => time(),
 				);
-				//do_action( 'debug_robot', print_r( $cache_data, TRUE ) );
 				wp_cache_set( $cachekey, $cache_data, 'bcmspostloop', $preserve['ttl'] );
 				unset( $cache_data );
 			}//end if
