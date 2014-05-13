@@ -483,6 +483,13 @@ class bCMS_PostLoop_Widget extends WP_Widget {
 			// old actions
 			do_action( $action_name, 'after', $ourposts, bcms_postloop() );
 
+			//If the template calls another postloop it can overwrite these values
+			$preserve = array(
+				'number' => $this->number,
+				'ttl' => $this->ttl,
+				'use_cache' => $this->use_cache,
+			);
+
 			// new actions
 			bcms_postloop()->do_action( 'post', $instance['template'], 'after', $ourposts, $this, $instance );
 
@@ -515,16 +522,16 @@ class bCMS_PostLoop_Widget extends WP_Widget {
 			echo $cached->html . $after_widget;
 
 			// if there is something to cache, it is new, and we want to cache it, let's cache it.
-			if ( $fresh_html && isset( $cachekey ) && $this->use_cache )
+			if ( $fresh_html && isset( $cachekey ) && $preserve['use_cache'] )
 			{
 				$cache_data = (object) array(
 					'html' => $cached->html,
 					'template' => $cached->template,
 					'instance' => $instance,
-					'post_ids' => bcms_postloop()->posts[ $this->number ],
+					'post_ids' => bcms_postloop()->posts[ $preserve['number'] ],
 					'time' => time(),
 				);
-				wp_cache_set( $cachekey, $cache_data, 'bcmspostloop', $this->ttl );
+				wp_cache_set( $cachekey, $cache_data, 'bcmspostloop', $preserve['ttl'] );
 				unset( $cache_data );
 			}//end if
 		}//end if
