@@ -113,6 +113,7 @@ class bCMS_Wijax_Widget extends WP_Widget
 				'title' => '',
 				'homelink' => get_option( 'blogname' ),
 				'maxchars' => 35,
+				'classes' => '',
 			)
 		);
 
@@ -120,7 +121,7 @@ class bCMS_Wijax_Widget extends WP_Widget
 		?>
 		<p>
 			<label for="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>"><?php _e( 'Title' ); ?></label>
-			<input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'title' ) ); ?>" type="text" value="<?php echo esc_attr( $title ); ?>" />
+			<input class="widefat" id="<?php echo esc_attr( $this->get_field_id( 'title' ) ); ?>" name="<?php echo esc_attr( $this->get_field_name( 'title' ) ); ?>" type="text" value="<?php echo esc_attr( $instance['title'] ); ?>" />
 			<br />
 			<small>For convenience, not shown publicly</small>
 		</p>
