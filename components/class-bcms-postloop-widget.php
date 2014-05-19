@@ -1200,6 +1200,7 @@ class bCMS_PostLoop_Widget extends WP_Widget {
 			$instance['tax_'. $taxonomy .'_in_related'] = isset( $instance['tax_'. $taxonomy .'_in_related'] ) ? $instance['tax_'. $taxonomy .'_in_related'] : 0;
 			$instance['tax_'. $taxonomy .'_not_in'] = isset( $instance['tax_'. $taxonomy .'_not_in'] ) ? $instance['tax_'. $taxonomy .'_not_in'] : array();
 			$instance['tax_'. $taxonomy .'_not_in_related'] = isset( $instance['tax_'. $taxonomy .'_not_in_related'] ) ? $instance['tax_'. $taxonomy .'_not_in_related'] : 0;
+			$instance['tax_'. $taxonomy .'_bool'] = isset( $instance['tax_'. $taxonomy .'_bool'] ) ? $instance['tax_'. $taxonomy .'_bool'] : '';
 
 			$tax = get_taxonomy( $taxonomy );
 			$tax_name = $tax->label;
