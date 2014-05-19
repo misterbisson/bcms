@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<phpunit backupGlobals="FALSE"
+	backupStaticAttributes="FALSE"
+	colors="TRUE"
+	convertErrorsToExceptions="TRUE"
+	convertNoticesToExceptions="TRUE"
+	convertWarningsToExceptions="TRUE"
+	processIsolation="FALSE"
+	stopOnFailure="FALSE"
+	syntaxCheck="FALSE"
+	bootstrap="tests/bootstrap.php"
+>
+	<testsuites>
+		<testsuite name="bCMS Test Suite">
+			<directory suffix="-test.php">./tests</directory> 
+		</testsuite>
+	</testsuites>
+</phpunit>
