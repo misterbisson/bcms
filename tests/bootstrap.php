@@ -14,25 +14,14 @@ if ( FALSE === $bootstrap )
 if ( file_exists( $bootstrap ) )
 {
 	$GLOBALS['wp_tests_options'] = array(
-		'pro' => TRUE,
+		'pro' => TRUE, /* use GO pro style WP directory layout */
 		'active_plugins' => array(
 			'bcms/bcms.php',
-			'go-config/go-config.php',
 		),
-		'template' => 'gigaom-child4',
-		'stylesheet' => 'gigaom-child4',
 	);
-
-	// we need to declare this method so nonce checking will work
-	function wp_verify_nonce()
-	{
-		return TRUE;
-	}//end verify_nonce
 
 	require_once $bootstrap;
 
-	// make sure the go-config dir is set
-	update_option( 'go-config-dir',  '_search' );
 	update_option( 'bcms_searchsmart', TRUE );
 }//end if
 else
