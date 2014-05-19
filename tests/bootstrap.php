@@ -14,7 +14,9 @@ if ( FALSE === $bootstrap )
 if ( file_exists( $bootstrap ) )
 {
 	$GLOBALS['wp_tests_options'] = array(
-		'pro' => TRUE, /* use GO pro style WP directory layout */
+		// set 'pro' to TRUE to use GO pro style WP directory layout.
+		// unset it to use standard WP installation layout
+		'pro' => TRUE,
 		'active_plugins' => array(
 			'bcms/bcms.php',
 		),
