@@ -41,8 +41,6 @@ class bCMS_PostLoop_Widget extends WP_Widget {
 
 		$this->wijax_varname = $mywijax->encoded_name( $this->id );
 
-		extract( $args );
-
 		$title = apply_filters('widget_title', empty( $instance['title'] ) ? '' : $instance['title']);
 
 		if( 'normal' == $instance['query'] || 'normal' == $instance['what'] )
@@ -512,14 +510,14 @@ class bCMS_PostLoop_Widget extends WP_Widget {
 			$extra_classes = array_merge( $extra_classes, $instance['extra_classes'] );
 
 			// output the widget
-			echo str_replace( 'class="', 'class="' . implode( ' ', $extra_classes ) .' ', $before_widget );
+			echo str_replace( 'class="', 'class="' . implode( ' ', $extra_classes ) .' ', $args['before_widget'] );
 			$title = apply_filters( 'widget_title', empty( $instance['title'] ) ? '' : $instance['title'] );
 			if ( isset( $instance['title_show'] ) && $instance['title_show'] && $title )
 			{
-				echo $before_title . $title . $after_title .'<div class="widget_subtitle">'. $instance['subtitle'] .'</div>';
+				echo $args['before_title'] . $title . $args['after_title'] .'<div class="widget_subtitle">'. $instance['subtitle'] .'</div>';
 			}//end if
 
-			echo $cached->html . $after_widget;
+			echo $cached->html . $args['after_widget'];
 
 			// if there is something to cache, it is new, and we want to cache it, let's cache it.
 			if ( $fresh_html && isset( $cachekey ) && $preserve['use_cache'] )

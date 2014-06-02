@@ -2,7 +2,7 @@
 
 class bSuite_List_Children
 {
-	
+
 	function __construct()
 	{
 		add_shortcode('pagemenu', array( $this, 'list_pages' ));
@@ -15,7 +15,7 @@ class bSuite_List_Children
 	{
 		// [pagemenu ]
 		global $id;
-	
+
 		$arg = shortcode_atts( array(
 			'title' => 'Contents',
 			'div_class' => 'contents pagemenu list_pages',
@@ -36,7 +36,7 @@ class bSuite_List_Children
 			'post_type'   => 'page',
 			'post_status' => 'publish'
 		), $arg );
-	
+
 		$prefix = $suffix = '';
 		if( $arg['div_class'] ){
 			$prefix .= '<div class="'. esc_attr( $arg['div_class'] ) .'">';
@@ -61,7 +61,7 @@ class bSuite_List_Children
 				$suffix = '</ol>'. $suffix;
 			}
 		}
-	
+
 		if(( $arg['excerpt'] ) || ( $arg['icon'] )){
 			$this->list_pages->show_excerpt = $arg['excerpt'];
 			$this->list_pages->show_icon = $arg['icon'];
@@ -69,57 +69,60 @@ class bSuite_List_Children
 		}
 		return( $prefix . ( $arg['show_parent'] ? '<li class="page_item page_item-parent"><a href="'. get_permalink( $arg['child_of'] ) .'">'. get_the_title( $arg['child_of'] ) .'</a></li>' : '' ) . wp_list_pages( $arg ) . $suffix );
 	}
-	
+
 	function list_pages_callback( $arg )
 	{
 		global $id, $post , $bsuite;
-	
+
 		if( $this->list_pages->show_excerpt ){
 			$post_orig = unserialize( serialize( $post )); // how else to prevent passing object by reference?
 			$id_orig = $id;
-	
+
 			$post = get_post( $arg[1] );
 			$id = $post->ID;
-	
-			$content = ( $this->list_pages->show_icon ? '<a href="'. get_permalink( $arg[1] ) .'" class="bsuite_post_icon_link" rel="bookmark" title="Permanent Link to '. attribute_escape( get_the_title( $arg[1] )) .'">'. $bsuite->icon_get_h( $arg[1] , 's' ) .'</a>' : '' ) . apply_filters( 'the_content', get_post_field( 'post_excerpt', $arg[1] ));
-	
+
+			$content = ( $this->list_pages->show_icon ? '<a href="'. get_permalink( $arg[1] ) .'" class="bsuite_post_icon_link" rel="bookmark" title="Permanent Link to '. esc_attr( get_the_title( $arg[1] )) .'">'. $bsuite->icon_get_h( $arg[1] , 's' ) .'</a>' : '' ) . apply_filters( 'the_content', get_post_field( 'post_excerpt', $arg[1] ));
+
 			$post = $post_orig;
 			$id = $id_orig;
-	
+
 			if( 5 < strlen( $content ))
 				return( $arg[0] .'<ul><li class="page_excerpt page_excerpt-'. $arg[1] .'">'. $content .'</li></ul>' );
 			return( $arg[0] );
-	
+
 		}else{
 			$content = apply_filters( 'the_content', get_post_field( 'post_excerpt', $arg[1] ));
-			return( $arg[0] .'<ul><li class="page_icon page_icon-'. $arg[1] .'"><a href="'. get_permalink( $arg[1] ) .'" class="bsuite_post_icon_link" rel="bookmark" title="Permanent Link to '. attribute_escape( get_the_title( $arg[1] )) .'">'. $bsuite->icon_get_h( $arg[1] , 's' ) .'</a></li></ul>' );
-	
+			return( $arg[0] .'<ul><li class="page_icon page_icon-'. $arg[1] .'"><a href="'. get_permalink( $arg[1] ) .'" class="bsuite_post_icon_link" rel="bookmark" title="Permanent Link to '. esc_attr( get_the_title( $arg[1] )) .'">'. $bsuite->icon_get_h( $arg[1] , 's' ) .'</a></li></ul>' );
+
 		}
-	
+
 	}
-	
-	function list_attachments($attr)
+
+	function list_attachments( $attr )
 	{
 		global $post;
 
-/*	
+/*
 		// Allow plugins/themes to override the default gallery template.
 		$output = apply_filters('post_gallery', '', $attr);
 		if ( $output != '' )
 			return $output;
-*/	
+*/
 		// We're trusting author input, so let's at least make sure it looks like a valid orderby statement
-		if ( isset( $attr['orderby'] ) ) {
+		if ( isset( $attr['orderby'] ) )
+		{
 			$attr['orderby'] = sanitize_sql_orderby( $attr['orderby'] );
-			if ( !$attr['orderby'] )
+			if ( ! $attr['orderby'] )
+			{
 				unset( $attr['orderby'] );
-		}
+			}//end if
+		}//end if
 
-		extract( shortcode_atts( array(
+		$attr = shortcode_atts( array(
 			'order'      => 'ASC',
 			'orderby'    => 'menu_order ID',
 			'id'         => $post->ID,
-			'post_mime_type' => FALSE ,
+			'post_mime_type' => FALSE,
 /*
 			'itemtag'    => 'dl',
 			'icontag'    => 'dt',
@@ -128,26 +131,28 @@ class bSuite_List_Children
 			'size' => 'thumbnail'
 			'post_mime_type' => 'image',
 */
-		), $attr ));
-	
-		$id = absint($id);
-		$attachments = get_children( array( 
-			'post_parent' => $id , 
-			'post_status' => 'inherit' , 
-			'post_type' => 'attachment' ,
-			'order' => $order,
-			'orderby' => $orderby,
-		));
-	
-		if ( empty( $attachments ))
+		), $attr );
+
+		$id = absint( $attr['id'] );
+		$attachments = get_children( array(
+			'post_parent' => $id,
+			'post_status' => 'inherit',
+			'post_type' => 'attachment',
+			'order' => $attr['order'],
+			'orderby' => $attr['orderby'],
+		) );
+
+		if ( empty( $attachments ) )
+		{
 			return '';
-	
+		}//end if
+
 		$output = "\n";
 		foreach ( $attachments as $att_id => $attachment )
 			$output .= '<li>'. wp_get_attachment_link( $att_id, FALSE, FALSE ) . "</li>\n";
 		return '<ul>'. $output .'</ul>';
-	
-	}
-}
+
+	}//end list_attachments
+}//end class
 
 $bsuite_list_children = new bSuite_List_Children;
