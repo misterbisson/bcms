@@ -46,6 +46,9 @@ class bCMS_Wijax_Widget extends WP_Widget
 			$wijax_source .= "?{$_SERVER['QUERY_STRING']}";
 		}//end if
 
+		// wijax doesn't work with paging. Let's strip out the "page/X/" section of the URL, which should help with cached wijax widgets
+		$wijax_source = preg_replace( '#/page/[0-9]+/wijax#', '/wijax', $wijax_source );
+
 		$wijax_varname = $mywijax->varname( $wijax_source, $is_local );
 
 		echo $args['before_widget'];
