@@ -3,7 +3,7 @@
 Plugin Name: bCMS: bSuite CMS Tools
 Plugin URI: http://wordpress.org/plugins/bcms/
 Description: Make WordPress a better CMS. Create a post loop in a widget. Lazy load widgets. More shortcodes. More good.
-Version: 5.2
+Version: 5.3
 Author: Casey Bisson
 Author URI: http://maisonbisson.com/blog/
 */
