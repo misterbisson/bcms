@@ -3,7 +3,7 @@ Contributors: misterbisson, borkweb, zbtirrell
 Donate link: http://MaisonBisson.com/
 Tags: bSuite, cms, content management, formatting, widgets, shortcodes, post loop, post, posts, page, pages, show posts, scroller, featured posts
 Requires at least: 3.3
-Tested up to: 3.8
+Tested up to: 4.0
 Stable tag: trunk
 
 A suite of tools that improve WordPress' CMS capabilities.
