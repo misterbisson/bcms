@@ -415,7 +415,7 @@ class Wijax_Encode
 	{
 		if ( function_exists( 'status_header' ) )
 			status_header( 200 );
-		header('X-Robots-Tag: noindex, follow' , TRUE );
+		header('X-Robots-Tag: noindex, follow', TRUE );
 		header('Content-Type: text/javascript');
 		echo self::encode( $content , $varname );
 	}//end out
