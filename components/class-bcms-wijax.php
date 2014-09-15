@@ -98,19 +98,19 @@ class bCMS_Wijax
 		{
 			$this->method = $this->ep_name_ajax;
 		}
-		
+
 		// or is this a Wiframe request?
 		elseif ( isset( $request[ $this->ep_name_iframe ] ))
 		{
 			include_once dirname( __FILE__ ) . '/class-bcms-wiframe-encode.php';
 			$this->method = $this->ep_name_iframe;
 		}
-		
+
 		// or is this a Wiframe source request?
 		elseif ( isset( $request[ $this->ep_name_iframe_source ] ))
 		{
 			$js = file_get_contents( dirname( __FILE__ ) . '/js/bcms-wiframe.js' );
-			
+
 			header('Content-Type: application/javascript');
 			echo $js;
 			die;
@@ -177,7 +177,7 @@ class bCMS_Wijax
 					$key = $this->encoded_name( $key );
 					if ( ! isset( $actions[ $key ] ))
 					{
-						die;					
+						die;
 					}
 				}
 				else
@@ -267,12 +267,12 @@ class bCMS_Wijax
 		$widget_data['params'][1] = array(
 			'number' => absint( $instance_number ),
 		);
-		
+
 		$arg2 = isset( $widget_data['size'] ) ? 'grid_' . $widget_data['size'] . ' ' : '';
 		$arg2 .= isset( $widget_data['class'] ) ? $widget_data['class'] . ' ' : '';
 		$arg2 .= isset( $widget_data['id'] ) ? $widget_data['id'] . ' ' : '';
 		$arg2 .= isset( $extra_classes ) ? $extra_classes : '';
-		
+
 		$widget_data['params'][0]['before_widget'] = sprintf( $widget_data['params'][0]['before_widget'], $widget_data['widget'], $arg2 );
 
 		call_user_func_array( $widget_data['callback'], $widget_data['params'] );
@@ -280,8 +280,8 @@ class bCMS_Wijax
 
 	function print_js( $finish_print ){
 ?>
-<script type="text/javascript">	
-	var wijax_widget_reload = true;	
+<script type="text/javascript">
+	var wijax_widget_reload = true;
 	var wijax_queue = {
 		max_allowed_requests: 3,
 		timer: false,
@@ -351,7 +351,7 @@ class bCMS_Wijax
 				success: function() {
 					// insert the fetched markup
 					$( $widget_area ).replaceWith( window[varname] );
-			
+
 					// find the widget title, add it to the DOM, remove the temp span
 					var $widget_title_el = $widget_parent.find('span.wijax-widgettitle');
 					var widget_title = $widget_title_el.text();
@@ -359,9 +359,9 @@ class bCMS_Wijax
 					// don't set a widget title div if there is no title text
 					if (widget_title)
 						$widget_parent.prepend(title_before + widget_title + title_after);
-					
+
 					$widget_title_el.remove();
-			
+
 					// find and set the widget ID and classes
 					var $widget_attr_el = $widget_parent.find( 'span.wijax-widgetclasses' );
 					var widget_id = $widget_attr_el.attr( 'id' );
@@ -386,13 +386,13 @@ class bCMS_Wijax
 			// find and load the widgets
 			$('a.wijax-source.wijax-onload').each(function() {
 				$(this).myWijaxLoader();
-			});	
+			});
 
 			// if we've already scrolled or there is a hash in the url,
-			// fire the scroll event and get the excerpts and widgets	
+			// fire the scroll event and get the excerpts and widgets
 			if ( ( document.location.hash ) || ( window.pageYOffset > 25 ) || ( document.body.scrollTop > 25 ) )
 				$( document ).trigger( 'scroll' );
-		});	
+		});
 
 		// do the onscroll actions
 		$(window).one('scroll', function(){
@@ -415,7 +415,7 @@ class Wijax_Encode
 	{
 		if ( function_exists( 'status_header' ) )
 			status_header( 200 );
-		header('X-Robots-Tag: noindex' , TRUE );
+		header('X-Robots-Tag: noindex, follow' , TRUE );
 		header('Content-Type: text/javascript');
 		echo self::encode( $content , $varname );
 	}//end out
