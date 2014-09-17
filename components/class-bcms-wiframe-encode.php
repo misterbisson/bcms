@@ -26,7 +26,7 @@ class BCMS_Wiframe_Encode
 			status_header( 200 );
 		}//end if
 
-		header( 'X-Robots-Tag: noindex', TRUE );
+		header( 'X-Robots-Tag: noindex, follow', TRUE );
 
 		wp_enqueue_script(
 			'jquery-postmessage',
