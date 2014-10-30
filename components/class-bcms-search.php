@@ -84,7 +84,7 @@ class bCMS_Search
 			}
 		}
 
-		require_once ABSPATH . 'wp-admin/upgrade-functions.php';
+		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
 		dbDelta("
 			CREATE TABLE $this->search_table (
@@ -246,7 +246,7 @@ class bCMS_Search
 				$insert[] = '('.
 					(int) $post->ID .', '.
 					(int) date( 'YW', strtotime( $post->post_date_gmt ) ) .', "'.
-					$this->wpdb->escape( $post->post_content )
+					esc_sql( $post->post_content )
 				.'")';
 			}
 		}
