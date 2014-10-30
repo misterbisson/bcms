@@ -39,6 +39,10 @@ This plugin is on Github: https://github.com/misterbisson/bcms
 
 The bCMS plugin is derived from bSuite and includes many of the content management features and none of the cruft from that plugin. See <a href="http://wordpress.org/extend/plugins/tags/bsuite">the whole family of bSuite plugins</a>.
 
+### = Build status =
+
+[![Build Status](https://travis-ci.org/misterbisson/bcms.svg?branch=master)](https://travis-ci.org/misterbisson/bcms)
+
 ## == Installation ==
 
 1. Place the plugin folder in your `wp-content/plugins/` directory and activate it.
