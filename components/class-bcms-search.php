@@ -72,16 +72,13 @@ class bCMS_Search
 	function create_table()
 	{
 		$charset_collate = '';
-		if ( version_compare( mysql_get_server_info() , '4.1.0', '>=' ) )
+		if ( ! empty( $this->wpdb->charset ) )
 		{
-			if ( ! empty( $this->wpdb->charset ) )
-			{
-				$charset_collate = 'DEFAULT CHARACTER SET '. $this->wpdb->charset;
-			}
-			if ( ! empty( $this->wpdb->collate ) )
-			{
-				$charset_collate .= ' COLLATE '. $this->wpdb->collate;
-			}
+			$charset_collate = 'DEFAULT CHARACTER SET '. $this->wpdb->charset;
+		}
+		if ( ! empty( $this->wpdb->collate ) )
+		{
+			$charset_collate .= ' COLLATE '. $this->wpdb->collate;
 		}
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
