@@ -41,7 +41,7 @@ The bCMS plugin is derived from bSuite and includes many of the content manageme
 
 ### = Build status =
 
-- Master: <a href="https://travis-ci.org/misterbisson/bcms"><img src="https://travis-ci.org/misterbisson/bcms.svg?branch=master" alt="build status"" /></a>
+- Master: <a href="https://travis-ci.org/misterbisson/bcms"><img src="https://travis-ci.org/misterbisson/bcms.svg?branch=master" alt="build status" /></a>
 
 ## == Installation ==
 
